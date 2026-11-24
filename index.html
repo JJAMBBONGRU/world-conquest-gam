@@ -430,7 +430,9 @@ const UNITS=[
 {id:'ballistic',n:'탄도 미사일',e:'☄️',c:'mis',t:'ballistic',a:450,cost:3500,fe:40,mp:0,days:450},
 {id:'hyper',n:'극초음속 미사일',e:'⚡',c:'mis',t:'hypersonic',a:1000,cost:7000,fe:60,mp:0,days:600},
 {id:'aitank',n:'AI 전차',e:'🤖',c:'land',t:'aisoldier',a:9000,d:7000,cost:90000,fe:120,mp:0,days:450,noUp:1},
-{id:'aijet',n:'AI 전투기',e:'🤖',c:'air',t:'aisoldier',a:8000,b:3000,cost:120000,fe:100,mp:0,days:500,noUp:1}
+{id:'aijet',n:'AI 전투기',e:'🤖',c:'air',t:'aisoldier',a:8000,b:3000,cost:120000,fe:100,mp:0,days:500,noUp:1},
+{id:'abomb',n:'원자폭탄',e:'☢️',c:'mis',t:'atomic',a:900,cost:25000,fe:150,mp:0,days:720,nuke:1},
+{id:'hbomb',n:'수소폭탄',e:'☢️',c:'mis',t:'hydrogen',a:3000,cost:60000,fe:300,mp:0,days:900,nuke:2}
 ];
 const UK={};UNITS.forEach((u,k)=>UK[u.id]=k);
 
@@ -476,9 +478,12 @@ diesel:{n:'디젤 엔진',e:'⚙️',cost:12000,req:['engine'],d:'육군·해군
 turbofan:{n:'터보팬 엔진',e:'✈️',cost:26000,req:['jet'],d:'비행기 속도 +30% (비행기만 빨라져요)'},
 electric:{n:'전기 엔진',e:'⚡',cost:40000,req:['computer'],d:'육군·해군 속도 +15%, 석유 −15%'},
 fuelcell:{n:'수소 연료전지',e:'💧',cost:80000,req:['electric'],d:'모든 부대 속도 +20%, 석유 −30%'},
-fusion:{n:'핵융합 발전',e:'☀️',cost:300000,req:['fuelcell','ai'],d:'모든 부대 속도 +40%, 석유 −60%, 돈 +30%'}
+fusion:{n:'핵융합 발전',e:'☀️',cost:300000,req:['fuelcell','ai'],d:'모든 부대 속도 +40%, 석유 −60%, 돈 +30%'},
+atomic:{n:'원자폭탄',e:'☢️',cost:45000,req:['flight','electronics'],d:'한 칸(약 30km 도시 하나)을 날려 주인 없는 땅으로 만들어요. 「원자폭탄 허용」 설정에서만 나와요'},
+hydrogen:{n:'수소폭탄',e:'☢️',cost:90000,req:['atomic','rocketry'],d:'둘레 1칸까지(지름 약 100km) 날려 버려요. 「원자폭탄 허용」 설정에서만 나와요'},
+abm:{n:'미사일 방어 체계',e:'🛡️',cost:40000,req:['guided','electronics'],d:'날아오는 원자폭탄·미사일을 하늘에서 맞혀 떨어뜨려요 (원폭 요격 +45%)'}
 };
-const TECH_YR={railway:1830,turbine:1897,diesel:1897,turbofan:1960,electric:2010,fuelcell:2030,fusion:2080,aisoldier:2100,satellite:1957,iron:-1000,archery:-3000,sailing:-3000,agri:1000,chivalry:800,siege:1100,printing:1300,navigation:1490,gunpowder:1300,industry:1760,steam:1800,medicine:1850,engine:1885,flight:1903,submarine:1900,electronics:1920,rocketry:1940,carrier:1920,jet:1940,computer:1945,guided:1950,modern:1980,drone:2000,shield:1990,composite:1980,ballistic:1957,stealth:1980,ai:2015,robotics:2025,aidrone:2025,hypersonic:2020,swarm:2030};
+const TECH_YR={atomic:1945,hydrogen:1952,abm:1972,railway:1830,turbine:1897,diesel:1897,turbofan:1960,electric:2010,fuelcell:2030,fusion:2080,aisoldier:2100,satellite:1957,iron:-1000,archery:-3000,sailing:-3000,agri:1000,chivalry:800,siege:1100,printing:1300,navigation:1490,gunpowder:1300,industry:1760,steam:1800,medicine:1850,engine:1885,flight:1903,submarine:1900,electronics:1920,rocketry:1940,carrier:1920,jet:1940,computer:1945,guided:1950,modern:1980,drone:2000,shield:1990,composite:1980,ballistic:1957,stealth:1980,ai:2015,robotics:2025,aidrone:2025,hypersonic:2020,swarm:2030};
 Object.keys(TECH_YR).forEach(t=>{if(TECH[t])TECH[t].yr=TECH_YR[t];});
 function curYear(){return G?SCEN[G.sid].year+G.day/365:2025;}
 // 이동 속도: 연구로 조금씩 빨라져요 (l 육군, s 해군, a 공군)
@@ -531,7 +536,7 @@ const T2025B=T1900B.concat(['industry','steam','medicine','engine','flight','sub
 const T_2025=[T2025B,T2025B.concat(['guided','modern']),T2025B.concat(['guided','modern','carrier','composite','drone','shield','ballistic','satellite']),T2025B.concat(['guided','modern','carrier','composite','drone','shield','ballistic','stealth','satellite'])];
 const SCEN={
 rome:{n:'🏛️ 로마 제국 시대',year:117,d:'트라야누스 황제 때 로마 제국이 가장 넓었던 시대! 로마 가도와 실크로드로 군대와 상인이 오가요. 동쪽에는 한나라·파르티아·쿠샨, 한반도에는 고구려·백제·신라가 있어요.',tiers:T_500,list:[
-['로마 제국',12.5,41.9,7,60,1.2,0.9,3,1.4,[[2.4,47,6],[-4,40,6],[-1.5,52.5,3.5],[9.5,47,3],[16,46,4],[22,43,5],[24.5,46,3],[23,38.5,3],[33,39,6],[38,37,3],[37,33.5,4],[31,27,7],[10,34.5,5],[3,35.5,5],[-6,34,4],[29,46.5,2],[44,33,2],[13.2,32.5,3],[35,31,2]]],
+['로마 제국',12.5,41.9,9,60,1.2,0.9,3,1.4,[[2.4,47,9],[-4,40,8],[-1.5,52.5,4.5],[9.5,47,4],[16,46,6],[22,43,7],[24.5,46,4],[23,38.5,4],[33,39,8],[38,37,4],[37,33.5,5],[31,27,8],[10,34.5,7],[3,35.5,7],[-6,34,5],[29,46.5,3],[44,33,2],[13.2,32.5,5],[35,31,3],[4.5,51,4],[7,49.5,4]]],
 ['파르티아 제국',44.6,33.1,10,10,0.8,0.7,2,1.4,[[52,32,8],[58,36,6],[48,37,4],[62,30,5]]],['쿠샨 제국',71,34,10,12,0.7,0.6,2,1.3,[[66,39,5],[77,29,6],[73,31,4]]],
 ['한나라',112.45,34.62,16,50,1.0,0.5,2,1.1,[[104,30.6,10],[113,23,8],[118.8,32.06,8],[116.4,39.9,6],[108.9,34.3,6],[100,37,5],[94.6,40.1,4],[126,40,2]]],
 ['흉노',102,47,14,1,0.4,0.8,1,2.6,[[90,46,10]]],['선비',118,44,10,1,0.4,0.7,1,2.2],['부여',125.5,44.5,4,0.6,0.5,0.5,1,1.3],
@@ -700,7 +705,8 @@ function upgradeDay(N){const em=eraMul(N);
   let n=Math.min(arr[k],Math.max(0.05,arr[k]*0.03));const c=Math.max(0,UNITS[to].cost-UNITS[k].cost)*0.4*(kid(N)?0:1);
   if(c>0){n=Math.min(n,Math.max(0,N.money*0.3)/c);if(n<=0)continue;N.money-=n*c;}
   arr[k]-=n;if(arr[k]<0.01){n+=arr[k];arr[k]=0;}arr[to]+=n;}}}
-function unlocked(N,k){const u=UNITS[k];if(N.allUnits)return true;if(u.only&&!hasTrait(N,u.only))return false;if(obsUp(N,k)>=0)return false;return !u.t||!!N.techs[u.t];}
+const AI_TECH=['ai','aidrone','swarm','aisoldier'];function isAIUnit(u){return AI_TECH.includes(u.t);}
+function unlocked(N,k){const u=UNITS[k];if(u.nuke&&!G.nuke)return false;if(N.allUnits&&!(N.allUnits===1&&isAIUnit(u)))return true;if(u.only&&!hasTrait(N,u.only))return false;if(obsUp(N,k)>=0)return false;return !u.t||!!N.techs[u.t];}
 function trainDays(N,k){const u=UNITS[k];return (u.c==='land'?u.days/(1+N.bld.barracks*0.1):u.days/Math.min(2.5,1+N.bld.factory*0.03))/(kid(N)?2:1);}
 
 function setupNation(N,S){
@@ -753,7 +759,7 @@ function fillEmpty(stepCost){
  const R=mulberry32(4242+G.sid.length*97),used=new Set(G.nations.filter(Boolean).map(N=>N.name));
  const empty=LANDS.filter(i=>G.owner[i]===0);if(!empty.length)return;
  for(let k=empty.length-1;k>0;k--){const j=Math.floor(R()*(k+1));[empty[k],empty[j]]=[empty[j],empty[k]];}
- const seeds=[];const D=42;const modern=SCEN[G.sid].year>=1900;
+ const seeds=[];const modern=SCEN[G.sid].year>=1900,sparse=['rome','three','med'].includes(G.sid),mid=G.sid==='age1500',D=sparse?80:42,LIM=sparse?12:mid?28:1e9;
  for(const c of empty){if(modern)break;if(G.nations.length+seeds.length>=200)break;if(seeds.some(sd=>cellDist(sd,c)<D))continue;
   let cnt=0;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const y=((c/W)|0)+dy;if(y<0||y>=H)continue;const j=y*W+((c%W)+dx+W)%W;if(LAND[j]&&G.owner[j]===0)cnt++;}if(cnt<20)continue;seeds.push(c);}
  const h=new Heap(),ids=[];
@@ -761,10 +767,12 @@ function fillEmpty(stepCost){
   const N=staticNation(id,[nm,lo,la,1,0,0.3,0.15,0,0.8,[]],id);const hh=(id*67.3+15)%360,rgb=hsl2rgb(hh,32,72);N.rgb=rgb;N.color=`rgb(${rgb})`;N.dyn=1;N.filler=1;N.traits=[];N.tm=traitsFor(nm,G.sid).tm;
   G.nations.push(N);N.cap=c;h.push(0,[c,id,0]);ids.push(id);}
  growMatrices();
- while(h.size){const[,v]=h.pop();const[c,id,st]=v;if(G.owner[c]!==0)continue;G.owner[c]=id;for(const j of NB[c]){if(G.owner[j]===0)h.push(st+stepCost(j),[j,id,st+stepCost(j)]);}}
+ while(h.size){const[,v]=h.pop();const[c,id,st]=v;if(G.owner[c]!==0)continue;G.owner[c]=id;for(const j of NB[c]){const s2=st+stepCost(j);if(G.owner[j]===0&&s2<=LIM)h.push(s2,[j,id,s2]);}}
+ // 옛날 시대는 주인 없는 빈 땅을 그대로 남겨요 (나중에 나라들이 넓혀 가요)
+ if(sparse)return;
  // 섬처럼 남은 곳은 가장 가까운 나라에 붙여요
  const q=[],dist=new Int32Array(W*H).fill(-1),src=new Uint8Array(W*H);for(const i of LANDS)if(G.owner[i]!==0){q.push(i);dist[i]=0;src[i]=G.owner[i];}
- let hd=0;while(hd<q.length){const c=q[hd++],cx=c%W,cy=(c/W)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const y=cy+dy;if(y<0||y>=H)continue;const j=y*W+(cx+dx+W)%W;if(dist[j]>=0)continue;dist[j]=dist[c]+1;if(!modern&&dist[j]>40)continue;src[j]=src[c];if(LAND[j]&&G.owner[j]===0)G.owner[j]=src[c];q.push(j);}}
+ let hd=0;while(hd<q.length){const c=q[hd++],cx=c%W,cy=(c/W)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const y=cy+dy;if(y<0||y>=H)continue;const j=y*W+(cx+dx+W)%W;if(dist[j]>=0)continue;dist[j]=dist[c]+1;if(!modern&&dist[j]>(mid?12:40))continue;src[j]=src[c];if(LAND[j]&&G.owner[j]===0)G.owner[j]=src[c];q.push(j);}}
 }
 function initGame(sid,diff){
  newG(sid,diff);const S=SCEN[sid];
@@ -890,7 +898,7 @@ function econDay(N){
  N.oil=clamp(N.oil,0,ocap);
  const eco=(1+0.1*U(N,'eco'))*(N.tm?N.tm.money:1)*(N.techs.fusion?1.3:1);r.tax=N.pop*0.6*N.tax*d*em*stF*eco;r.fac=Math.max(0,N.bld.factory-(N.dmgFac||0))*2*em*d*stF*eco;r.port=N.bld.port*1.5*em*d*(1-(N.block||0))*stF*eco;r.gold=N.goldC*0.5*em*stF*eco;
  let up=0;for(let k=0;k<UNITS.length;k++)up+=(N.units[k]+(N.emb?N.emb[k]:0))*UNITS[k].cost*0.0015*(UNITS[k].noUp?0:1);if(kid(N))up*=0.5;
- r.pol=POL[N.pol||0].c*N.occ*em*0.5;r.up=up+bldTotal(N)*0.03*em+r.pol;r.cty=(N.cityInc||0)*0.6*em*stF;r.fac*=roadBonus(N);r.money=r.tax+r.fac+r.port+r.gold+r.cty-r.up-r.foodBuy;
+ r.pol=POL[N.pol||0].c*N.occ*em*0.5;r.up=up+bldTotal(N)*0.03*em+r.pol;r.cty=(N.cityInc||0)*2.5*em*stF;r.fac*=roadBonus(N);r.money=r.tax+r.fac+r.port+r.gold+r.cty-r.up-r.foodBuy;
  N.money+=r.money;N.broke=false;
  if(N.money<1&&r.money<0)N.broke=true;
  if(N.money<0)N.money=0;
@@ -900,7 +908,7 @@ function econDay(N){
  const tgt=78+3*U(N,'wel')+Math.min(5,(N.bld.hospital||0)*0.5)+(N.tm?N.tm.stab:0)+((N.pol||0)===2?-5:(N.pol||0)===3?3:0)-Math.max(0,N.tax-0.2)*200-N.weary*0.4-(N.hungry?25:0)-(N.broke?15:0)-Math.min(15,(r.foodBuy||0)/Math.max(1,r.tax)*20)-Math.min(35,Math.max(0,N.cells/adminCap(N)-1)*30);N.stab+=(clamp(tgt,0,100)-N.stab)*0.02;
  r.res=(1+Math.sqrt(N.pop)*0.6+N.bld.lab*2*Math.max(0.5,d))*resMul(N)*stF*(kid(N)?2:1);
  upgradeDay(N);
- r.res*=Math.sqrt(roadBonus(N));if(N.broke)r.res=0;
+ r.res*=Math.sqrt(roadBonus(N))*(1+Math.min(0.8,(N.cityLvSum||0)*0.02));if(N.broke)r.res=0;
  if(N.res&&TECH[N.res]){N.rp[N.res]=(N.rp[N.res]||0)+r.res;if(N.rp[N.res]>=tcost(N,N.res))finishTech(N,N.res);}
  const wc=warCount(N);N.weary=wc?Math.min(100,N.weary+0.04*wc):Math.max(0,N.weary-0.08);
  // 훈련
@@ -912,7 +920,7 @@ function finishTech(N,t){N.techs[t]=1;N.res=null;delete N.rp[t];
  if(N.id===ME){const ups=UNITS.filter(u=>OBS[u.id]&&OBS[u.id][0]===t);if(ups.length)feed(`⬆️ ${TECH[t].n} 개발! ${ups.map(u=>u.n).join('·')} → ${[...new Set(ups.map(u=>UNITS[UK[OBS[u.id][1]]].n))].join('·')}(으)로 업그레이드돼요`);}
  if(N.human)log(`🎉 ${N.name}: 새 기술 「${TECH[t].e} ${TECH[t].n}」 개발 완료!`,[N.id]);
  if(N.human===null&&NET.mode!=='client'&&['flight','computer','ai','swarm','robotics','hypersonic'].includes(t))log(`🔬 ${N.name}이(가) ${TECH[t].e} ${TECH[t].n} 기술을 개발했어요`,[N.id],true);}
-function availTechs(N){return TECH_IDS.filter(t=>!N.techs[t]&&yearOk(t)&&TECH[t].req.every(q=>N.techs[q]));}
+function availTechs(N){return TECH_IDS.filter(t=>!N.techs[t]&&yearOk(t)&&(G.nuke||(t!=='atomic'&&t!=='hydrogen'))&&TECH[t].req.every(q=>N.techs[q]));}
 function warCount(N){let c=0;const w=G.war[N.id];for(let j=1;j<w.length;j++)if(w[j])c++;return c;}
 
 /* ---------------- 국경/전쟁 ---------------- */
@@ -922,7 +930,7 @@ function scanBorders(){
  for(const i of LANDS){const o=G.owner[i];if(!o)continue;const N=G.nations[o];let fr=false;
   for(const j of NB[i]){const p=G.owner[j];if(p===o)continue;if(p===0){N._neutral.push(j);continue;}N._nbr.add(p);
    if(G.war[o][p]){fr=true;const key=o*256+p;let a=G.fronts.get(key);if(!a){a=[];G.fronts.set(key,a);}a.push(j);}}
-  if(fr){N._front++;if(rnd()<0.04/SC&&G.frontSample.length<24)G.frontSample.push(i);}}
+  if(fr){N._front++;if(rnd()<0.06/SC&&G.frontSample.length<90)G.frontSample.push(i);}}
 }
 function cellDist(a,b){const ax=a%W,bx=b%W;let dx=Math.abs(ax-bx);dx=Math.min(dx,W-dx);const dy=((a/W)|0)-((b/W)|0);return Math.sqrt(dx*dx+dy*dy);}
 function warDay(){
@@ -935,7 +943,7 @@ function warDay(){
   if(A.infC<0.5)continue; // 기본 병사가 없으면 땅을 차지할 수 없어요
   const vA=spdMul(A,'l');let p=Math.max(0,0.05*r*r/(1+r*r)-0.018)*SC*Math.sqrt(vA);if(kid(B))p*=0.2;if(p<=0)continue;p=Math.min(p,0.7);
   const f=A.focus[b];let maxCap=Math.max(SC,Math.ceil(targets.length*0.03*SC*vA));
-  for(const t of targets){if(maxCap<=0)break;if(G.owner[t]!==b)continue;if(kid(B)&&t===B.cap)continue;let q=p*(TERR[t]===1?0.35:TERR[t]===2?0.7:1)*(ROAD[t]===1?1.5:ROAD[t]>=2?2.2:0.85);if(CITYAT&&CITYAT[t]>=0){const C=CITIES[CITYAT[t]];q*=C.castle?0.2:0.45;}if(f!=null&&f>=0){q*=cellDist(t,f)<9*SC?1.8:0.6;}
+  for(const t of targets){if(maxCap<=0)break;if(G.owner[t]!==b)continue;if(kid(B)&&t===B.cap)continue;let q=p*(TERR[t]===1?0.35:TERR[t]===2?0.7:1)*(ROAD[t]===1?1.5:ROAD[t]>=2?2.2:0.85);if(WALL[t])q*=0.2;if(CITYAT&&CITYAT[t]>=0){const ci=CITYAT[t];if(G.cityHp&&G.cityHp[ci]>0)q=0;}if(f!=null&&f>=0){q*=cellDist(t,f)<9*SC?1.8:0.6;}
    if(rnd()<q){setOwner(t,a);maxCap--;const vis=A.id===ME||B.id===ME;if(rnd()<(vis?0.25:0.06)/SC)addFx({k:'a',c:t,n:a});else if(rnd()<0.3/SC)addFx({k:'c',c:t});}}
  }
  // 해군·공군 (짝마다 한 번)
@@ -983,7 +991,7 @@ function colonizeDay(){
  for(const N of G.nations){if(!N||!N.alive||!N.colonize||N.infC<1)continue;
   if(N._neutral.length&&N.cells<adminCap(N)){
    const p=(N.techs.industry?0.12+0.3*Math.min(1,N.infC/30):0.03+0.07*Math.min(1,N.infC/30))*(kid(N)?1.5:1);let tries=Math.min(40,Math.floor(p*CF+rnd()));
-   while(tries-->0){const c=pick(N._neutral);if(G.owner[c]!==0)continue;const cc=climCost(c),cost=2*eraMul(N)*cc*cc/CF;if(rnd()<1/cc&&N.money>=cost){N.money-=cost;setOwner(c,N.id);}}}
+   while(tries-->0){const c=pick(N._neutral);if(G.owner[c]!==0)continue;if(G.rad&&G.rad[c]>G.day)continue;const cc=climCost(c),cost=2*eraMul(N)*cc*cc/CF;if(rnd()<1/cc&&N.money>=cost){N.money-=cost;setOwner(c,N.id);}}}
   // 대항해: 바다 건너 주인 없는 땅에 배를 보내 식민지 만들기
   if(N.techs.navigation&&N.nav>0&&N.coast>0&&N.cells<adminCap(N)*1.3&&rnd()<0.02*Math.min(1,N.nav/30)*(kid(N)?1.5:1)){
    const cost=20*eraMul(N);if(N.money<cost)continue;
@@ -1025,6 +1033,7 @@ function fireMissile(A,k,cell){
  const u=UNITS[k];if(!u||u.c!=='mis')return'미사일이 아니에요';if(A.units[k]<1)return'그 미사일이 없어요';
  const b=G.owner[cell];if(!(b>0&&b!==SEA))return'나라 땅을 골라 주세요';if(!G.war[A.id][b])return'전쟁 중인 나라에만 쏠 수 있어요';
  const B=G.nations[b];A.units[k]-=1;
+ if(u.nuke)return nukeLaunch(A,B,u,cell);
  const block=Math.min(0.75,B.bld.airdef*0.07+(B.techs.shield?0.15:0))*(A.sats>=1?0.5:1);const ok=rnd()>block;
  addFx({k:'m',a:A.cap,b:cell,ok:ok?1:0});
  if(ok){const frac=u.a/(u.a+B.landDef*0.5+50)*0.25*(A.sats>=1?2:1);applyLoss(B,'land',frac);applyLoss(B,'air',frac*0.5);
@@ -1033,6 +1042,22 @@ function fireMissile(A,k,cell){
   return null;}
  if(A.human||B.human)log(`🛡️ ${B.name}이(가) ${A.name}의 ${u.n}을(를) 막아냈어요!`,[A.id,b]);return null;
 }
+// 원자폭탄: 현실 크기를 생각했어요. 지도 한 칸이 약 30km라서 원자폭탄(15킬로톤)은 맞은 한 칸, 수소폭탄(1메가톤 이상)은 둘레 1칸까지 날아가요.
+function nukeBlock(A,B){return Math.min(0.85,(B.techs.abm?0.45:0)+B.bld.airdef*0.04+(B.techs.shield?0.1:0))*(A.sats>=1?0.8:1);}
+function nukeLaunch(A,B,u,cell){const ok=rnd()>nukeBlock(A,B);addFx({k:'m',a:A.cap,b:cell,ok:ok?1:0,pl:0});
+ if(!ok){log(`🛡️ ${B.name}의 미사일 방어 체계가 ${A.name}의 ${u.n}을(를) 하늘에서 요격했어요!`,[A.id,B.id],true);return null;}
+ setTimeout(()=>{},0);nukeStrike(A,cell,u.nuke);return null;}
+function nukeStrike(A,cell,lvl){const R0=lvl>=2?1:0,R1=R0+1,x0=cell%W,y0=(cell/W)|0,hit=new Map();
+ for(let dy=-R1;dy<=R1;dy++){const y=y0+dy;if(y<0||y>=H)continue;for(let dx=-R1;dx<=R1;dx++){const i=y*W+((x0+dx)%W+W)%W;if(!LAND[i])continue;const inner=Math.max(Math.abs(dx),Math.abs(dy))<=R0;
+  const o=G.owner[i];if(o>0){hit.set(o,(hit.get(o)||0)+(inner?1:0.3));}
+  // 건물은 모두 사라져요
+  const bo=G.bc.get(i);if(bo){const N=o>0?G.nations[o]:null;for(const b in bo){if(N)N.bld[b]=Math.max(0,N.bld[b]-bo[b]);}G.bc.delete(i);}
+  if(CITYAT&&CITYAT[i]>=0){const ci=CITYAT[i];G.cityLv[ci]=Math.max(1,G.cityLv[ci]-(inner?3:1));G.cityDmg[ci]=1;if(G.cityHp)G.cityHp[ci]=0;}
+  if(inner){_setOwner(i,0);G.rad=G.rad||{};G.rad[i]=G.day+3650;if(typeof dirtyCell==='function')dirtyCell(i);}}}
+ for(const[o,w]of hit){const B=G.nations[o];if(!B)continue;const k=kid(B)?0.3:1;B.pop*=1-Math.min(0.3,w*0.04)*k;B.stab=Math.max(0,B.stab-25*k);B.weary=Math.min(100,B.weary+20*k);applyLoss(B,'land',0.05*w*k);}
+ for(const N of G.nations)if(N&&N.alive&&N.id!==A.id){G.rel[N.id][A.id]=G.rel[A.id][N.id]=Math.max(-100,(G.rel[N.id][A.id]||0)-40);}
+ A.stab=Math.max(0,A.stab-8);MAPDIRTY=true;addFx({k:'n',c:cell,r:R0});
+ log(`☢️ ${A.name}이(가) ${lvl>=2?'수소폭탄':'원자폭탄'}을 터뜨렸어요! 그곳은 모든 건물이 사라지고 10년 동안 아무도 살 수 없는 땅이 되었어요. 세계가 크게 화가 났어요`,[A.id],true);}
 function addFx(f){f.t=performance.now();G.fx.push(f);if(G.fx.length>120)G.fx.shift();if(NET.mode==='host'&&NET.fxq.length<(f.k==='a'?8:12))NET.fxq.push(f);}
 
 /* ---------------- AI ---------------- */
@@ -1052,8 +1077,9 @@ function aiDay(){
   if((G.day+N.id*3)%30===0)aiWar(N);
   if((G.day+N.id)%15===0)aiPeace(N);
   if(N.sats>=1&&(N.satCd||0)<=G.day&&warCount(N)&&rnd()<0.2){const en=[];for(let j=1;j<G.nations.length;j++)if(G.war[N.id][j]&&!kid(G.nations[j]))en.push(j);if(en.length){const E=G.nations[pick(en)];if(E.cap>=0)snipe(N,E.cap);}}
+ if(G.nuke&&!N.human&&warCount(N)&&(G.day+N.id)%30===0&&N.stab<45&&rnd()<0.15){const nk=UNITS.findIndex((u,k)=>u.nuke&&N.units[k]>=1);if(nk>=0){const en=[];for(let j=1;j<G.nations.length;j++)if(G.war[N.id][j]&&!kid(G.nations[j])&&G.nations[j].cap>=0)en.push(j);if(en.length){const E=G.nations[pick(en)];const ci=CITIES.findIndex(C=>G.owner[C.c]===E.id);fireMissile(N,nk,ci>=0?CITIES[ci].c:E.cap);}}}
  if(N.mis>=1&&(G.day+N.id)%20===0&&warCount(N)){const en=[];for(let j=1;j<G.nations.length;j++)if(G.war[N.id][j])en.push(j);const E=G.nations[pick(en)];if(kid(E))continue;
-   const k=bestUnits(N,'mis').find(k=>N.units[k]>=1);if(k!=null&&E.cap>=0)fireMissile(N,k,E.cap);}}
+   const k=bestUnits(N,'mis').find(k=>N.units[k]>=1&&!UNITS[k].nuke);if(k!=null&&E.cap>=0)fireMissile(N,k,E.cap);}}
  if(G.day%30===0)for(let a=1;a<G.nations.length;a++)for(let b=1;b<G.nations.length;b++){if(a===b||G.war[a][b])continue;const v=G.rel[a][b];if(v>5)G.rel[a][b]--;else if(v<-5)G.rel[a][b]++;}
  G.offers=G.offers.filter(o=>G.day-o.day<45);
 }
@@ -1085,7 +1111,7 @@ function pickUnit(N){
  const tryC=cls=>bestUnits(N,cls).find(k=>!canTrain(N,k,1)&&!(thirsty&&UNITS[k].oil>0.6));
  let k=null;if(N.infC+qi<(N.supC+qs)*0.8+3)k=tryC('inf');
  if(k==null){const x=rnd();const war=warCount(N)>0;
-  if(x<0.35)k=tryC('sup');else if(x<0.55)k=tryC('air');else if(x<0.72&&N.coast>0)k=tryC('sea');else if(x<0.82&&war)k=tryC('mis');}
+  if(x<0.35)k=tryC('sup');else if(x<0.55)k=tryC('air');else if(x<0.72&&N.coast>0)k=tryC('sea');else if(x<0.82&&war){k=tryC('mis');if(k!=null&&UNITS[k].nuke&&(N.units[k]>=2||rnd()>0.2))k=null;}}
  if(k==null&&N.techs.satellite&&(N.sats||0)<2&&rnd()<0.1)k=tryC('sat');
  if(k==null)k=tryC('inf');return k;
 }
@@ -1138,6 +1164,7 @@ function buildZone(N,z,c){const Z=ZONES[z];if(!Z)return'없는 단지예요';if(
  for(let round=0;round<6&&n<10;round++){let any=false;for(const b of Z.l){if(n>=10)break;const B=BLD[b];if(B.t&&!N.techs[B.t])continue;if(N.bld[b]>=bldCap(N,b))continue;
   let pick=-1;for(const i of cells){if(!cellOk(N,b,i)){pick=i;break;}}if(pick<0)continue;const cost=bldCost(N,b,pick);if(start-N.money+cost>budget){fail++;continue;}
   doBuild(N,b,pick);done[b]=(done[b]||0)+1;n++;any=true;}if(!any)break;}
+ if(n){G.zones=G.zones||[];if(!G.zones.some(q=>q.n===N.id&&cellDist(q.c,c)<4))G.zones.push({n:N.id,c,k:z});}
  if(!n)return fail?`💰 ${Z.n}를 지을 돈이 부족해요`:`이 근처에는 ${Z.n}를 지을 자리가 없어요`;
  return`${Z.e} ${Z.n} 완성! ${Object.keys(done).map(b=>BLD[b].n+' '+done[b]+'개').join(', ')} (💰${fmt(start-N.money)})`;}
 function doBuild(N,b,i){if(i==null||i<0)i=bestCell(N,b);if(i<0)return;N.money-=bldCost(N,b,i);N.bld[b]++;addBld(i,b,1);}
@@ -1145,21 +1172,21 @@ const CHEATS={
  '돈벼락':'💰 돈 +10만','인구폭발':'👨‍👩‍👧 인구 2배','연구왕':'🔬 지금 연구 바로 완료','모든기술':'🧠 모든 기술 완료','자원풍부':'⛏️ 식량·철·석유 가득',
  '군대소환':'🪖 가장 센 부대들 소환','평화의비둘기':'🕊️ 모든 전쟁 끝내기','훈련끝':'⏩ 훈련 중인 부대 바로 완료','행복한나라':'😀 안정도 100','병사충전':'🪖 병사 인원 가득','최고나라':'🌍 나라 업그레이드 모두 최고 단계','무기해금':'🔓 연구 안 한 무기·다른 나라 전용 무기도 모두 사용'};
 function applyCheat(N,code,x){
- const T=N.techs;
+ const T=N.techs,lv=x&&x.lv===2?2:1,noAI='🔒 1단계 치트로는 AI 기술·AI 군대를 쓸 수 없어요 (2단계 비밀번호가 필요해요)';
  switch(code){
  case'돈벼락':N.money+=100000;break;case'인구폭발':N.pop*=2;N.mpMax=N.pop*50;break;
- case'연구왕':if(!N.res)return'먼저 연구할 기술을 골라 주세요';finishTech(N,N.res);break;
- case'모든기술':TECH_IDS.forEach(t=>T[t]=1);N.res=null;break;
+ case'연구왕':if(!N.res)return'먼저 연구할 기술을 골라 주세요';if(lv<2&&AI_TECH.includes(N.res))return noAI;finishTech(N,N.res);break;
+ case'모든기술':TECH_IDS.forEach(t=>{if(lv>=2||!AI_TECH.includes(t))T[t]=1;});N.res=null;if(lv<2){calcMil(N);return'✨ AI 기술만 빼고 모두 배웠어요 (AI는 2단계 치트)';}break;
  case'자원풍부':N.food=100+N.pop*3;N.iron=500+N.bld.mine*100;N.oil=500+N.bld.well*150;break;
  case'군대소환':['inf','sup','air','sea','mis'].forEach((c,i)=>{const k=bestUnits(N,c)[0];if(k!=null&&!(c==='sea'&&!N.coast))N.units[k]+=[30,15,10,6,4][i];});break;
  case'평화의비둘기':for(let j=1;j<G.nations.length;j++)if(G.war[N.id][j])makePeace(N.id,j);break;
  case'훈련끝':N.queue.forEach(q=>N.units[q.k]+=q.n);N.queue=[];break;
  case'최고나라':{N.up={};UPG_IDS.forEach(k=>N.up[k]=UPG_MAX);break;}
- case'무기해금':N.allUnits=1;break;
+ case'무기해금':N.allUnits=Math.max(N.allUnits||0,lv);if(lv<2){calcMil(N);return'✨ AI 군대만 빼고 모든 무기를 풀었어요 (AI는 2단계 치트)';}break;
  case'행복한나라':N.stab=100;N.weary=0;break;case'병사충전':N.mp=N.mpMax;break;
  case'set':{const v=Number(x.v);if(!isFinite(v)||v<0)return'숫자를 확인해 주세요';const f=x.f;
   if(f==='money')N.money=v;else if(f==='pop'){N.pop=Math.max(0.01,v/100);N.mpMax=N.pop*50;}else if(f==='food')N.food=v;else if(f==='iron')N.iron=v;else if(f==='oil')N.oil=v;else if(f==='mp')N.mp=v/1000;else if(f==='dev')N.dev=clamp(v,0.1,5);
-  else if(f==='res'){if(!N.res)return'먼저 연구할 기술을 골라 주세요';N.rp[N.res]=(N.rp[N.res]||0)+v;if(N.rp[N.res]>=tcost(N,N.res))finishTech(N,N.res);}else return'모르는 항목이에요';break;}
+  else if(f==='res'){if(!N.res)return'먼저 연구할 기술을 골라 주세요';if(lv<2&&AI_TECH.includes(N.res))return noAI;N.rp[N.res]=(N.rp[N.res]||0)+v;if(N.rp[N.res]>=tcost(N,N.res))finishTech(N,N.res);}else return'모르는 항목이에요';break;}
  default:return'그런 치트는 없어요';}
  calcMil(N);return'✨ 치트 적용!';
 }
@@ -1186,7 +1213,7 @@ function applyCmd(nid,a,x){
  case'unload':{const n=x.all?1e9:Math.max(0,+x.n||0);const l=unloadTroops(N,n);calcMil(N);return l>0?`🏝️ 병사 ${r1(l)}부대가 배에서 내렸어요`:'배에 탄 병사가 없어요';}
  case'repair':{if(!(N.dmgFac>0))return'고칠 공장이 없어요';const c=repairCost(N);if(N.money<c)return`💰 수리비가 부족해요 (${fmt(c)} 필요)`;N.money-=c;const n=N.dmgFac;N.dmgFac=0;return`🔧 공장 ${n}개를 고쳤어요! 다시 돌아가요`;}
  case'snipe':return snipe(N,x.c|0)||'🛰️ 정밀 타격 성공!';
- case'conquer':{if(G.conq)return null;const st=conquestShare(nid);if(st<0.5)return`세계의 50% 이상을 차지해야 열려요 (지금 ${Math.round(st*100)}%)`;
+ case'conquer':{if(G.conq)return null;const st=conquestShare(nid);if(st<0.8)return`세계의 80% 이상을 차지해야 열려요 (지금 ${Math.round(st*100)}%)`;
   const co=G.nations.filter(M=>M&&M.alive&&M.id!==nid&&!M.human).map(M=>M.id);G.conq=nid;G.conqQ=co;
   for(const a of co)for(const b of co)if(a!==b){G.war[a][b]=0;G.ally[a][b]=1;G.rel[a][b]=100;}
   for(const a of co){const M=G.nations[a];G.truce[a][nid]=G.truce[nid][a]=0;G.ally[a][nid]=G.ally[nid][a]=0;if(!G.war[a][nid]){G.war[a][nid]=G.war[nid][a]=1;G.warStart[a][nid]=G.warStart[nid][a]=G.day;M.gain[nid]=0;N.gain[a]=0;}G.rel[a][nid]=G.rel[nid][a]=-100;M.focus={};M.colonize=false;}
@@ -1200,6 +1227,7 @@ function applyCmd(nid,a,x){
  case'cityFixAll':{ensureCities();let t=0,n=0;for(let i=0;i<CITIES.length;i++){if(G.owner[CITIES[i].c]!==nid||!(G.cityDmg[i]>0.005))continue;const c=cityFixCost(N,i);if(N.money<c)continue;N.money-=c;G.cityDmg[i]=0;t+=c;n++;}return n?`🔧 도시 ${n}곳을 복구했어요 (💰${fmt(t)})`:'복구할 돈이 부족하거나 부서진 도시가 없어요';}
  case'cityNew':return foundCity(N,x.c|0);
  case'road':return startRoad(N,x.c|0);
+ case'wall':return startRoad(N,x.c|0,'wall');
  case'auto':{if(!['res','army','build'].includes(x.k))return null;N.auto=N.auto||{};N.auto[x.k]=x.v?1:0;return null;}
  case'quick':{const n=x.max?150:clamp(x.n|0,1,100),pat=['inf','inf','sup','inf','air','sup','inf','sea'];let made=0;
   for(let i=0;i<n;i++){let cls=pat[i%pat.length];if(cls==='sea'&&!N.coast)cls='inf';let k=bestUnits(N,cls).find(k=>!canTrain(N,k,1));if(k==null)k=bestUnits(N,'inf').find(k=>!canTrain(N,k,1));if(k==null)break;doTrain(N,k,1);made++;}
@@ -1512,6 +1540,59 @@ const CITY_DATA=[
 [[[1840,'오클랜드']],174.76,-36.85,1,1840]
 ];
 
+// 더 많은 도시들
+CITY_DATA.push(
+[[[1394,'수원']],127.03,37.26,[[1394,1],[1990,2]],1394],[[[600,'청주']],127.49,36.64,1,600],[[[600,'전주']],127.15,35.82,1,600],[[[1900,'대전']],127.38,36.35,[[1900,1],[1990,2]],1900],[[[1897,'목포']],126.39,34.81,1,1897],
+[[[1946,'울산']],129.31,35.54,[[1946,1],[1990,2]],1000],[[[700,'강릉']],128.9,37.75,1,700],[[[1400,'제주']],126.53,33.5,1,1100],[[[1000,'안동']],128.73,36.57,1,900],[[[1914,'포항']],129.34,36.02,1,1914],
+[[[1400,'함흥']],127.54,39.92,1,1400],[[[1400,'의주'],[1914,'신의주']],124.4,40.1,1,1400],[[[1890,'청진']],129.78,41.8,1,1890],[[[1400,'원산']],127.44,39.15,1,1880],
+[[[1889,'요코하마']],139.64,35.44,[[1859,1],[1950,2]],1859],[[[1600,'나고야']],136.91,35.18,[[1610,1],[1950,2]],1610],[[[1600,'고베']],135.19,34.69,1,1868],[[[1600,'히로시마']],132.46,34.39,1,1589],[[[1600,'센다이']],140.87,38.27,1,1600],
+[[[1400,'톈진']],117.2,39.08,[[1404,1],[1900,2]],1404],[[[1000,'다롄']],121.61,38.91,1,1898],[[[700,'지난']],117.12,36.65,1,700],[[[700,'정저우']],113.63,34.75,1,700],[[[700,'창사']],112.94,28.23,1,-200],
+[[[800,'푸저우']],119.3,26.08,1,-200],[[[1000,'샤먼']],118.09,24.48,1,1394],[[[1000,'쑤저우']],120.62,31.3,[[600,2],[1900,1]],-500],[[[1200,'창춘']],125.32,43.82,1,1800],[[[500,'란저우']],103.83,36.06,1,-81],
+[[[1800,'선전']],114.06,22.54,[[1980,1],[2000,3]],1980],[[[1000,'난닝']],108.37,22.82,1,318],[[[500,'타이위안']],112.55,37.87,1,-497],[[[1500,'마카오']],113.54,22.2,1,1557],[[[1500,'카슈가르']],75.99,39.47,1,-100],
+[[[1900,'가오슝']],120.3,22.63,1,1624],[[[1600,'후에']],107.59,16.46,1,1600],[[[1500,'다낭']],108.22,16.05,1,1835],[[[1500,'만달레이']],96.08,21.97,1,1857],[[[1500,'치앙마이']],98.99,18.79,1,1296],
+[[[1500,'세부']],123.89,10.32,1,1565],[[[1500,'다바오']],125.61,7.07,1,1848],[[[1500,'반둥']],107.61,-6.91,1,1810],[[[1500,'메단']],98.67,3.6,1,1590],[[[1500,'마카사르']],119.42,-5.13,1,1600],
+[[[1500,'비엔티안']],102.63,17.97,1,1560],[[[1500,'브루나이']],114.94,4.94,1,1400],[[[1600,'하이데라바드']],78.49,17.39,[[1591,1],[1950,2]],1591],[[[1600,'아마다바드']],72.57,23.02,1,1411],
+[[[1700,'푸네']],73.86,18.52,1,1600],[[[1500,'자이푸르']],75.79,26.91,1,1727],[[[1500,'러크나우']],80.95,26.85,1,1500],[[[1500,'바라나시']],83.0,25.32,1,-800],[[[1500,'고아']],73.83,15.49,1,1510],
+[[[1500,'치타공']],91.83,22.36,1,1340],[[[1500,'페샤와르']],71.58,34.01,1,-100],[[[1500,'헤라트']],62.2,34.35,1,-500],[[[1500,'부하라']],64.42,39.77,1,-500],[[[1500,'알마티']],76.95,43.24,1,1854],
+[[[1990,'아스타나']],71.45,51.17,1,1830],[[[1500,'아슈하바트']],58.38,37.95,1,1881],[[[1500,'두샨베']],68.79,38.56,1,1920],[[[1500,'비슈케크']],74.59,42.87,1,1825],
+[[[1500,'타브리즈']],46.29,38.08,1,700],[[[1500,'시라즈']],52.53,29.59,1,693],[[[1500,'마슈하드']],59.61,36.3,1,818],[[[1500,'바스라']],47.78,30.51,1,636],[[[1500,'모술']],43.13,36.34,1,-500],
+[[[1500,'알레포']],37.16,36.2,[[-2000,2],[1500,1]],-2000],[[[1500,'베이루트']],35.5,33.89,1,-1500],[[[1500,'암만']],35.93,31.95,1,-1000],[[[1500,'텔아비브']],34.78,32.09,1,1909],[[[1500,'쿠웨이트']],47.98,29.37,1,1613],
+[[[1500,'도하']],51.53,25.29,1,1825],[[[1500,'아부다비']],54.37,24.45,1,1761],[[[1500,'무스카트']],58.41,23.59,1,1500],[[[1500,'사나']],44.21,15.37,1,-500],[[[1500,'아덴']],45.03,12.79,1,-500],
+[[[1500,'제다']],39.17,21.49,1,600],[[[1500,'메디나']],39.61,24.52,1,-500],[[[1500,'이즈미르']],27.14,38.42,[[-1000,1]],-1000],[[[1500,'부르사']],29.06,40.19,1,-200],[[[1500,'트라브존']],39.72,41.0,1,-756],
+[[[1500,'예레반']],44.51,40.18,1,-782],[[[1500,'오데사']],30.72,46.48,1,1794],[[[1500,'하르키우']],36.23,49.99,1,1654],[[[1500,'리비우']],24.03,49.84,1,1256],[[[1500,'리가']],24.1,56.95,1,1201],
+[[[1500,'빌뉴스']],25.28,54.69,1,1323],[[[1500,'탈린']],24.75,59.44,1,1248],[[[1500,'크라쿠프']],19.94,50.06,[[1000,2],[1600,1]],1000],[[[1500,'그단스크'],[1793,'단치히'],[1945,'그단스크']],18.65,54.35,1,997],
+[[[1500,'쾰른']],6.96,50.94,[[50,1],[1200,2],[1500,1]],50],[[[1500,'프랑크푸르트']],8.68,50.11,1,794],[[[1500,'드레스덴']],13.74,51.05,1,1206],[[[1500,'라이프치히']],12.37,51.34,1,1165],[[[1500,'뉘른베르크']],11.08,49.45,1,1050],
+[[[1500,'취리히']],8.54,47.37,1,-15],[[[1500,'제네바']],6.14,46.2,1,-121],[[[1500,'리옹']],4.83,45.76,[[-43,2],[500,1]],-43],[[[1500,'보르도']],-0.58,44.84,1,-300],[[[1500,'툴루즈']],1.44,43.6,1,-100],
+[[[1500,'낭트']],-1.55,47.22,1,-100],[[[1500,'릴']],3.06,50.63,1,1066],[[[1500,'안트베르펜']],4.4,51.22,[[1500,2],[1600,1]],800],[[[1500,'로테르담']],4.48,51.92,1,1270],
+[[[1500,'맨체스터']],-2.24,53.48,[[79,1],[1850,2]],79],[[[1500,'버밍엄']],-1.9,52.48,1,1166],[[[1500,'글래스고']],-4.25,55.86,1,1175],[[[1500,'브리스톨']],-2.59,51.45,1,1000],[[[1500,'카디프']],-3.18,51.48,1,1081],
+[[[1500,'벨파스트']],-5.93,54.6,1,1613],[[[1500,'세비야']],-5.98,37.39,[[-200,1],[1500,2],[1700,1]],-200],[[[1500,'발렌시아']],-0.38,39.47,1,-138],[[[1500,'빌바오']],-2.93,43.26,1,1300],[[[1500,'톨레도']],-4.02,39.86,[[-190,1],[560,2],[1561,1]],-190],
+[[[1500,'포르투']],-8.61,41.15,1,-300],[[[1500,'피렌체']],11.26,43.77,[[-59,1],[1200,2],[1600,1]],-59],[[[1500,'토리노']],7.69,45.07,1,-28],[[[1500,'볼로냐']],11.34,44.49,1,-189],[[[1500,'팔레르모']],13.36,38.12,[[-734,1],[900,2],[1300,1]],-734],
+[[[1500,'시라쿠사']],15.29,37.08,[[-734,2],[300,1]],-734],[[[1500,'베오그라드']],20.46,44.82,1,-279],[[[1500,'자그레브']],15.98,45.81,1,1094],[[[1500,'사라예보']],18.41,43.86,1,1461],[[[1500,'소피아']],23.32,42.7,1,-500],
+[[[1500,'부쿠레슈티']],26.1,44.43,1,1459],[[[1500,'테살로니키']],22.94,40.64,[[-315,1],[300,2],[1400,1]],-315],[[[1500,'브라티슬라바']],17.11,48.15,1,907],[[[1500,'베르겐']],5.32,60.39,1,1070],[[[1500,'예테보리']],11.97,57.71,1,1621],
+[[[1500,'노브고로드']],31.27,58.52,[[859,2],[1500,1]],859],[[[1500,'니즈니노브고로드'],[1932,'고리키'],[1990,'니즈니노브고로드']],44.0,56.33,1,1221],[[[1500,'사마라'],[1935,'쿠이비셰프'],[1991,'사마라']],50.1,53.2,1,1586],
+[[[1500,'로스토프나도누']],39.72,47.24,1,1749],[[[1500,'옴스크']],73.37,54.99,1,1716],[[[1500,'크라스노야르스크']],92.87,56.01,1,1628],[[[1500,'하바롭스크']],135.07,48.48,1,1858],[[[1500,'무르만스크']],33.08,68.97,1,1916],
+[[[1500,'아르한겔스크']],40.54,64.54,1,1584],[[[1500,'세바스토폴']],33.52,44.62,1,1783],[[[1500,'아스트라한']],48.03,46.35,1,1558],[[[1500,'페름']],56.23,58.01,1,1723],[[[1500,'톰스크']],84.95,56.48,1,1604],
+[[[1500,'마라케시']],-7.99,31.63,[[1070,2],[1300,1]],1070],[[[1500,'페스']],-5.0,34.03,[[789,2],[1600,1]],789],[[[1500,'오랑']],-0.63,35.7,1,903],[[[1500,'벵가지']],20.07,32.12,1,-525],[[[1500,'아스완']],32.9,24.09,1,-2000],
+[[[1500,'룩소르'],[1500,'룩소르']],32.64,25.69,1,-3000],[[[1500,'포트사이드']],32.3,31.26,1,1859],[[[1500,'아부자']],7.4,9.06,1,1976],[[[1500,'카노']],8.52,12.0,[[1000,2],[1900,1]],1000],[[[1500,'이바단']],3.9,7.38,1,1829],
+[[[1500,'아비장']],-4.02,5.35,1,1898],[[[1500,'바마코']],-8.0,12.64,1,1640],[[[1500,'니아메']],2.11,13.51,1,1900],[[[1500,'와가두구']],-1.52,12.37,1,1441],[[[1500,'프리타운']],-13.23,8.48,1,1792],
+[[[1500,'두알라']],9.7,4.05,1,1884],[[[1500,'야운데']],11.52,3.85,1,1889],[[[1500,'리브르빌']],9.45,0.39,1,1849],[[[1500,'브라자빌']],15.28,-4.27,1,1880],[[[1500,'루붐바시']],27.48,-11.66,1,1910],
+[[[1500,'루사카']],28.32,-15.39,1,1905],[[[1500,'하라레']],31.05,-17.83,1,1890],[[[1500,'더반']],31.02,-29.86,1,1835],[[[1500,'프리토리아']],28.19,-25.75,1,1855],[[[1500,'빈트후크']],17.08,-22.56,1,1890],
+[[[1500,'캄팔라']],32.58,0.35,1,1890],[[[1500,'몸바사']],39.67,-4.04,1,900],[[[1500,'잔지바르']],39.2,-6.16,[[1500,1]],1100],[[[1500,'지부티']],43.15,11.59,1,1888],[[[1500,'포트수단']],37.22,19.62,1,1905],
+[[[1500,'곤다르']],37.47,12.6,[[1636,2],[1855,1]],1636],[[[1500,'캘거리']],-114.07,51.05,1,1875],[[[1500,'에드먼턴']],-113.49,53.55,1,1795],[[[1500,'위니펙']],-97.14,49.9,1,1738],[[[1500,'핼리팩스']],-63.57,44.65,1,1749],[[[1500,'오타와']],-75.7,45.42,1,1826],
+[[[1500,'디트로이트']],-83.05,42.33,[[1701,1],[1920,2]],1701],[[[1500,'애틀랜타']],-84.39,33.75,1,1837],[[[1500,'댈러스']],-96.8,32.78,[[1841,1],[1970,2]],1841],[[[1500,'피닉스']],-112.07,33.45,1,1868],[[[1500,'라스베이거스']],-115.14,36.17,1,1905],
+[[[1500,'샌디에이고']],-117.16,32.72,1,1769],[[[1500,'포틀랜드']],-122.68,45.52,1,1845],[[[1500,'솔트레이크시티']],-111.89,40.76,1,1847],[[[1500,'세인트루이스']],-90.2,38.63,[[1764,1],[1900,2]],1764],[[[1500,'피츠버그']],-80.0,40.44,1,1758],
+[[[1500,'미니애폴리스']],-93.27,44.98,1,1867],[[[1500,'캔자스시티']],-94.58,39.1,1,1838],[[[1500,'오마하']],-95.93,41.26,1,1854],[[[1500,'호놀룰루']],-157.86,21.31,1,1809],[[[1500,'산안토니오']],-98.49,29.42,1,1718],
+[[[1500,'과달라하라']],-103.35,20.67,1,1542],[[[1500,'몬테레이']],-100.32,25.69,1,1596],[[[1500,'베라크루스']],-96.13,19.17,1,1519],[[[1500,'메리다']],-89.62,20.97,1,1542],[[[1500,'과테말라시티']],-90.51,14.63,1,1776],
+[[[1500,'산살바도르']],-89.19,13.69,1,1525],[[[1500,'마나과']],-86.25,12.13,1,1819],[[[1500,'산호세']],-84.09,9.93,1,1737],[[[1500,'산토도밍고']],-69.93,18.49,1,1496],[[[1500,'산후안']],-66.11,18.47,1,1521],
+[[[1500,'포르토프랭스']],-72.34,18.54,1,1749],[[[1500,'킹스턴']],-76.79,17.97,1,1692],[[[1500,'메데인']],-75.57,6.24,1,1616],[[[1500,'카르타헤나']],-75.51,10.39,1,1533],[[[1500,'과야킬']],-79.89,-2.17,1,1538],
+[[[1500,'마라카이보']],-71.64,10.64,1,1574],[[[1500,'마나우스']],-60.02,-3.12,1,1669],[[[1500,'벨렝']],-48.5,-1.46,1,1616],[[[1500,'포르탈레자']],-38.54,-3.73,1,1726],[[[1500,'헤시피']],-34.88,-8.05,[[1537,2],[1700,1]],1537],
+[[[1500,'벨루오리존치']],-43.94,-19.92,1,1897],[[[1500,'쿠리치바']],-49.27,-25.43,1,1693],[[[1500,'포르투알레그리']],-51.23,-30.03,1,1772],[[[1500,'아순시온']],-57.58,-25.26,1,1537],[[[1500,'코르도바']],-64.18,-31.42,1,1573],
+[[[1500,'로사리오']],-60.64,-32.94,1,1793],[[[1500,'멘도사']],-68.83,-32.89,1,1561],[[[1500,'발파라이소']],-71.62,-33.05,1,1536],[[[1500,'안토파가스타']],-70.4,-23.65,1,1868],[[[1500,'푼타아레나스']],-70.91,-53.16,1,1848],
+[[[1500,'아레키파']],-71.54,-16.41,1,1540],[[[1500,'포토시']],-65.75,-19.58,[[1545,3],[1700,1]],1545],[[[1500,'산타크루스']],-63.18,-17.78,1,1561],
+[[[1500,'캔버라']],149.13,-35.28,1,1913],[[[1500,'호바트']],147.33,-42.88,1,1804],[[[1500,'케언스']],145.77,-16.92,1,1876],[[[1500,'타운즈빌']],146.82,-19.26,1,1864],[[[1500,'웰링턴']],174.78,-41.29,1,1840],
+[[[1500,'크라이스트처치']],172.64,-43.53,1,1848],[[[1500,'포트모르즈비']],147.18,-9.44,1,1873],[[[1500,'수바']],178.44,-18.14,1,1882],[[[1500,'누메아']],166.46,-22.26,1,1854]
+);
+
 /* ---------------- 나라 깃발 ---------------- */
 // 근현대 나라: 국기 그림(flagcdn.com)을 인터넷에서 받아요. 옛 나라·자료 없는 나라는 직접 그리거나 나라 색 한 가지로 칠해요.
 const FLAG_ISO={'대한민국':'kr','대한제국':'kr','북한':'kp','중국':'cn','일본':'jp','일본 제국':'jp','대만':'tw','몽골':'mn','러시아':'ru','러시아 제국':'ru','카자흐스탄':'kz','우즈베키스탄':'uz','인도':'in','파키스탄':'pk','방글라데시':'bd',
@@ -1585,6 +1666,15 @@ const GREAT_ROADS=[
 ['아우토반',1935,9999,[[13.4,52.52],[11.58,48.14],[9.99,53.55],[6.96,50.94],[8.68,50.11],[11.58,48.14]]],
 ['팬아메리칸 하이웨이',1960,9999,[[-149.9,61.22],[-123.12,49.28],[-118.24,34.05],[-99.13,19.43],[-90.5,14.6],[-79.52,8.98],[-74.07,4.71],[-78.47,-0.18],[-77.04,-12.05],[-70.67,-33.45],[-58.38,-34.6]]]
 ];
+// 옛 성벽 — [이름, 생긴 해, 사라진 해, [[경도,위도],...]]
+const GREAT_WALLS=[
+['만리장성',-214,9999,[[119.8,40.0],[117.5,40.4],[115.9,40.4],[114.4,40.6],[112.5,40.3],[111.1,39.9],[109.5,38.9],[107.5,37.9],[106.0,37.5],[104.5,37.2],[102.6,37.9],[100.5,38.9],[98.3,39.8]]],
+['하드리아누스 방벽',122,410,[[-1.6,55.0],[-2.2,55.0],[-2.9,54.98],[-3.3,54.95]]],
+['고구려 천리장성',631,668,[[121.6,39.1],[122.4,40.2],[123.2,41.3],[124.0,42.2],[125.2,43.2]]],
+['고려 천리장성',1033,1400,[[124.4,40.1],[125.4,40.4],[126.4,40.5],[127.4,40.3],[128.3,40.0],[129.0,39.7]]],
+['리메스 (로마 국경 성벽)',100,450,[[6.5,51.6],[7.4,50.5],[8.3,50.1],[9.0,49.3],[9.9,48.9],[11.3,48.9],[12.0,48.9]]]
+];
+const WALL=new Uint8Array(W*H);
 const RF=4,RW=W/RF,RH=Math.ceil(H/RF);let CLND=null,CCST=null;
 let CITY_G=null,CITY_BASE=0,NEWC=0,CITIES=[],CITYAT=null,ROAD=new Uint8Array(W*H),ROADS=[],CITY_SID=null,ROADKEY='';
 function pickEra(v,y){if(!Array.isArray(v))return v;let r=v[0][1];for(const e of v)if(e[0]<=y)r=e[1];return r;}
@@ -1611,7 +1701,13 @@ function markRoad(path,lv){const cells=[];let prev=-1;for(const k of path){const
   if(prev>=0){let x0=prev%W,y0=(prev/W)|0;const x1=c%W,y1=(c/W)|0;let ddx=x1-x0;if(Math.abs(ddx)>W/2)ddx-=Math.sign(ddx)*W;const st=Math.max(Math.abs(ddx),Math.abs(y1-y0),1);
    for(let s=1;s<=st;s++){const x=((Math.round(x0+ddx*s/st))%W+W)%W,y=Math.round(y0+(y1-y0)*s/st),i=y*W+x;if(LAND[i]){if(ROAD[i]<lv)ROAD[i]=lv;}}}
   else if(ROAD[c]<lv)ROAD[c]=lv;cells.push(c);prev=c;}return cells;}
-function buildRoads(){const y=curYear();ROAD.fill(0);ROADS=[];coarseInit();
+function markWall(path){const cells=markRoadInto(path,WALL);return cells;}
+function markRoadInto(path,ARR){const cells=[];let prev=-1;for(const k of path){const c=nodeCell(k);if(c<0)continue;
+  if(prev>=0){const x0=prev%W,y0=(prev/W)|0,x1=c%W,y1=(c/W)|0;let ddx=x1-x0;if(Math.abs(ddx)>W/2)ddx-=Math.sign(ddx)*W;const st=Math.max(Math.abs(ddx),Math.abs(y1-y0),1);
+   for(let s=1;s<=st;s++){const x=((Math.round(x0+ddx*s/st))%W+W)%W,y=Math.round(y0+(y1-y0)*s/st);for(const[ax,ay]of[[0,0],[1,0],[0,1]]){const yy=y+ay;if(yy>=H)continue;const i=yy*W+(x+ax)%W;if(LAND[i])ARR[i]=1;}}}
+  cells.push(c);prev=c;}return cells;}
+function buildRoads(){const y=curYear();ROAD.fill(0);WALL.fill(0);ROADS=[];coarseInit();
+ for(const[nm,y0,y1,wp]of GREAT_WALLS){if(y<y0||y>=y1)continue;let all=[];for(let k=1;k<wp.length;k++){const a=landNear(cellAt(wp[k-1][0],wp[k-1][1]),4),b=landNear(cellAt(wp[k][0],wp[k][1]),4);if(a<0||b<0)continue;const p=roadPath(a,b,8000);if(!p)continue;const cs=markWall(p);all=all.concat(all.length?cs.slice(1):cs);}if(all.length)ROADS.push({lv:4,pts:all,nm});}
  // 도시 사이 길: 가까운 도시 2곳과 이어요
  const done=new Set();
  for(let a=0;a<CITIES.length;a++){const A=CITIES[a];const ds=[];for(let b=0;b<CITIES.length;b++){if(a===b)continue;const B=CITIES[b];if(COMP[A.c]!==COMP[B.c])continue;let dx=Math.abs(A.lo-B.lo);dx=Math.min(dx,360-dx);const d=Math.hypot(dx,A.la-B.la);if(d<16)ds.push([d,b]);}
@@ -1620,9 +1716,9 @@ function buildRoads(){const y=curYear();ROAD.fill(0);ROADS=[];coarseInit();
  for(const[nm,y0,y1,wp]of GREAT_ROADS){if(y<y0||y>=y1)continue;let all=[];for(let k=1;k<wp.length;k++){const a=landNear(cellAt(wp[k-1][0],wp[k-1][1]),4),b=landNear(cellAt(wp[k][0],wp[k][1]),4);if(a<0||b<0)continue;const p=roadPath(a,b,8000);if(!p)continue;const cs=markRoad(p,2);all=all.concat(all.length?cs.slice(1):cs);}
   if(all.length)ROADS.push({lv:2,pts:all,nm});}
  // 사람이 만든 길
- for(const br of (G.broads||[]))ROADS.push({lv:3,pts:markRoad(br.p.slice(0,br.d),3),nid:br.n,bld:br.d<br.p.length,full:br.p});
+ for(const br of (G.broads||[])){if(br.k==='wall')ROADS.push({lv:4,pts:markWall(br.p.slice(0,br.d)),nid:br.n,bld:br.d<br.p.length,full:br.p,wall:1});else ROADS.push({lv:3,pts:markRoad(br.p.slice(0,br.d),3),nid:br.n,bld:br.d<br.p.length,full:br.p});}
 }
-function roadKey(){const y=curYear();return GREAT_ROADS.map(r=>y>=r[1]&&y<r[2]?1:0).join('')+'|'+CITIES.length;}
+function roadKey(){const y=curYear();return GREAT_ROADS.map(r=>y>=r[1]&&y<r[2]?1:0).join('')+GREAT_WALLS.map(r=>y>=r[1]&&y<r[2]?1:0).join('')+'|'+CITIES.length;}
 function ensureCities(){if(!G)return;const y=SCEN[G.sid].year;
  if(CITY_SID!==G.sid||CITY_G!==G){CITY_SID=G.sid;CITY_G=G;CITIES=[];CITYAT=new Int16Array(W*H).fill(-1);
   CITY_DATA.forEach(d=>{const[nm,lo,la,sz,y0,y1]=d;if(y0>y||(y1!=null&&y1<=y))return;const c=landNear(cellAt(lo,la),3);if(c<0||CITYAT[c]>=0)return;
@@ -1631,22 +1727,34 @@ function ensureCities(){if(!G)return;const y=SCEN[G.sid].year;
    for(let dy=-14;dy<=14&&!timber;dy+=2)for(let dx=-14;dx<=14;dx+=2){const yy=y0c+dy;if(yy<0||yy>=H)continue;const i=yy*W+((x0+dx)%W+W)%W;if(!LAND[i])continue;if(TERR[i]===1||CLIM[i]===1||CLIM[i]===3||CLIM[i]===4){timber=true;break;}}
    CITYAT[c]=CITIES.length;CITIES.push({nm,lo,la,sz,c,coast,timber});});
   CITY_BASE=CITIES.length;NEWC=0;ROADKEY='';
-  if(!G.cityLv||G.cityLv.length<CITY_BASE){G.cityLv=CITIES.map((_,i)=>G.cityLv&&G.cityLv[i]!=null?G.cityLv[i]:cityBase(i));G.cityDmg=CITIES.map((_,i)=>G.cityDmg&&G.cityDmg[i]!=null?G.cityDmg[i]:0);}}
+  if(!G.cityLv||G.cityLv.length<CITY_BASE){G.cityLv=CITIES.map((_,i)=>G.cityLv&&G.cityLv[i]!=null?G.cityLv[i]:cityBase(i));G.cityDmg=CITIES.map((_,i)=>G.cityDmg&&G.cityDmg[i]!=null?G.cityDmg[i]:0);}
+  if(!G.cityHp||G.cityHp.length<CITY_BASE)G.cityHp=CITIES.map((_,i)=>G.cityHp&&G.cityHp[i]!=null?G.cityHp[i]:cityHpMax(i));}
  // 사람이 세운 도시·성
  const nc=G.newCities||[];while(NEWC<nc.length){const d=nc[NEWC++];const c=d.c;if(CITYAT[c]>=0)continue;const lo=(c%W+.5)*CS-180,la=LAT0-(((c/W)|0)+.5)*CS;
-  CITYAT[c]=CITIES.length;CITIES.push({nm:d.nm,lo,la,sz:1,c,coast:isCoastCell(c),timber:true,castle:d.k==='castle',made:1});if(G.cityLv.length<CITIES.length){G.cityLv.push(1);G.cityDmg.push(0);}}
- const k=roadKey()+'|'+(G.broads||[]).map(b=>b.d).join(',');if(k!==ROADKEY){ROADKEY=k;buildRoads();}}
+  CITYAT[c]=CITIES.length;CITIES.push({nm:d.nm,lo,la,sz:1,c,coast:isCoastCell(c),timber:true,castle:d.k==='castle',made:1});if(G.cityLv.length<CITIES.length){G.cityLv.push(1);G.cityDmg.push(0);}if(G.cityHp&&G.cityHp.length<CITIES.length)G.cityHp.push(cityHpMax(CITIES.length-1));}
+ const k=roadKey()+'|'+(G.broads||[]).map(b=>b.d).join(',');if(k!==ROADKEY){ROADKEY=k;buildRoads();}
+ const rk=G.sid+'|'+CITIES.length;if(rk!==REGKEY||!REGION){REGKEY=rk;buildRegions();}}
+let REGION=null,RBORD=null,REGCELLS=[],REGKEY='';
+function buildRegions(){REGION=new Int16Array(W*H).fill(-1);RBORD=new Uint8Array(W*H);REGCELLS=CITIES.map(()=>[]);const dist=new Int16Array(W*H).fill(-1),q=new Int32Array(W*H);let h=0,t=0;
+ CITIES.forEach((C,ci)=>{REGION[C.c]=ci;dist[C.c]=0;q[t++]=C.c;});
+ while(h<t){const c=q[h++];if(dist[c]>=34)continue;for(const j of NB[c]){if(!LAND[j]||dist[j]>=0)continue;dist[j]=dist[c]+1;REGION[j]=REGION[c];q[t++]=j;}}
+ for(const i of LANDS){const r=REGION[i];if(r<0)continue;REGCELLS[r].push(i);const x=i%W,y=(i/W)|0;const rj=REGION[y*W+(x+1)%W];if(rj>=0&&rj!==r)RBORD[i]|=1;if(y+1<H){const dj=REGION[(y+1)*W+x];if(dj>=0&&dj!==r)RBORD[i]|=2;}}}
+function cityHpMax(i){const C=CITIES[i],lv=G.cityLv&&G.cityLv[i]||1;return Math.round((60+40*lv)*(C&&C.castle?2:1));}
 function cityOf(c,r){if(!CITYAT)return -1;if(CITYAT[c]>=0)return CITYAT[c];const x0=c%W,y0=(c/W)|0;let best=-1,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const y=y0+dy;if(y<0||y>=H)continue;const i=y*W+((x0+dx)%W+W)%W;if(CITYAT[i]>=0){const d=dx*dx+dy*dy;if(d<bd){bd=d;best=CITYAT[i];}}}return best;}
 function cityGrowCost(N,ci){const lv=G.cityLv[ci];return Math.round(250*lv*lv*eraMul(N));}
 function cityFixCost(N,ci){return Math.round(G.cityDmg[ci]*180*G.cityLv[ci]*eraMul(N));}
 function isCoastCell(c){const x0=c%W,y0=(c/W)|0;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const y=y0+dy;if(y<0||y>=H)continue;if(!LAND[y*W+((x0+dx)%W+W)%W])return true;}return false;}
 // 하루마다: 도시 세기, 포위당한 도시 피해, 저절로 조금씩 복구
 function cityDay(){ensureCities();const y=curYear();
- for(const N of G.nations)if(N){N.cityN=0;N.cityInc=0;N.coastCity=false;N.timber=false;N.links=0;}
+ for(const N of G.nations)if(N){N.cityN=0;N.cityInc=0;N.cityLvSum=0;N.coastCity=false;N.timber=false;N.links=0;}
  for(let i=0;i<CITIES.length;i++){const C=CITIES[i],o=G.owner[C.c];if(G.day%365===0){const b=cityBase(i);if(b>G.cityLv[i])G.cityLv[i]=b;}
-  if(!(o>0))continue;const N=G.nations[o];if(!N)continue;const lv=G.cityLv[i];N.cityN++;N.cityInc+=Math.pow(lv,1.6)*(1-G.cityDmg[i]);if(C.coast){N.coastCity=true;if(C.timber)N.timber=true;}
+  if(!(o>0))continue;const N=G.nations[o];if(!N)continue;const lv=G.cityLv[i];N.cityN++;N.cityInc+=Math.pow(lv,1.8)*(1-G.cityDmg[i]);N.cityLvSum=(N.cityLvSum||0)+lv;if(C.coast){N.coastCity=true;if(C.timber)N.timber=true;}
   // 포위: 전쟁 중인 적이 가까이 오면 도시가 부서지고 나라 힘이 크게 줄어요
-  let sieged=false;if(warCount(N)){const x0=C.c%W,y0=(C.c/W)|0;for(const[dx,dy]of[[3,0],[-3,0],[0,3],[0,-3],[2,2],[-2,2],[2,-2],[-2,-2],[5,0],[-5,0],[0,5],[0,-5]]){const yy=y0+dy;if(yy<0||yy>=H)continue;const e=G.owner[yy*W+((x0+dx)%W+W)%W];if(e>0&&e!==o&&G.war[o][e]){sieged=true;break;}}}
+  let sieged=false,E=null;if(warCount(N)){const x0=C.c%W,y0=(C.c/W)|0;for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1],[3,0],[-3,0],[0,3],[0,-3],[2,2],[-2,2],[2,-2],[-2,-2],[5,0],[-5,0],[0,5],[0,-5]]){const yy=y0+dy;if(yy<0||yy>=H)continue;const e=G.owner[yy*W+((x0+dx)%W+W)%W];if(e>0&&e!==o&&G.war[o][e]){sieged=true;if(!E||G.nations[e].landAtk>E.landAtk)E=G.nations[e];}}}
+  if(!G.cityHp)G.cityHp=CITIES.map((_,j)=>cityHpMax(j));const hpM=cityHpMax(i);
+  if(sieged&&E){const loss=clamp(6*E.landAtk/(N.landDef+50),0.5,30)*(C.castle?0.5:1)*(kid(N)?0.3:1)*(E.air>N.air?1.3:1);G.cityHp[i]=Math.max(0,G.cityHp[i]-loss);applyLoss(E,'land',0.0006);
+   if(G.cityHp[i]<=0){G.cityHp[i]=Math.round(hpM*0.3);setOwner(C.c,E.id);if(N.id===ME||E.id===ME||lv>=3)log(`🏯 ${cityName(i)} 함락! ${E.name}이(가) 성벽을 무너뜨리고 ${N.name}의 도시를 차지했어요`,[N.id,E.id],N.id===ME||E.id===ME);continue;}}
+  else G.cityHp[i]=Math.min(hpM,G.cityHp[i]+hpM*0.01);
   if(sieged){const k=kid(N)?0.3:1;G.cityDmg[i]=Math.min(1,G.cityDmg[i]+0.008*k);N.stab=Math.max(0,N.stab-0.12*lv*k);N.money=Math.max(0,N.money-lv*eraMul(N)*1.2*k);N.pop*=1-0.0004*lv*k;N.mp*=1-0.001*k;
    if(N.id===ME&&(UI.siegeT==null||G.day-UI.siegeT>25)){UI.siegeT=G.day;feed(`🏙️ ${cityName(i)}이(가) 공격받고 있어요! 나라 힘이 줄어들고 있어요`);}}
   else if(G.cityDmg[i]>0)G.cityDmg[i]=Math.max(0,G.cityDmg[i]-0.0015);
@@ -1655,29 +1763,37 @@ function cityDay(){ensureCities();const y=curYear();
   else if(!N.human&&!kid(N)&&lv<5&&G.day%60===(i%60)&&N.money>cityGrowCost(N,i)*4&&!warCount(N)){N.money-=cityGrowCost(N,i);G.cityLv[i]++;}}
  for(const N of G.nations)if(N&&N.alive&&N.cap>=0){if(isCoastCell(N.cap)){N.coastCity=true;if(!N.timber){const ci=cityOf(N.cap,10);if(ci<0||CITIES[ci].timber)N.timber=true;}}}
  for(const R of ROADS){if(R.lv!==1)continue;const a=G.owner[CITIES[R.a].c],b=G.owner[CITIES[R.b].c];if(a>0&&a===b)G.nations[a].links++;}
- roadJobsDay();}
+ roadJobsDay();zoneGrowDay();}
+function zoneGrowDay(){if(!G.zones||!G.zones.length)return;
+ for(let zi=0;zi<G.zones.length;zi++){const z=G.zones[zi];if((G.day+zi)%12)continue;const N=G.nations[z.n];if(!N||!N.alive||G.owner[z.c]!==N.id)continue;
+  // 둘레 빈 자리에 주택(마을 건물)을 하나씩 더 지어요
+  if(N.bld.town<bldCap(N,'town')&&N.money>bldCost(N,'town',z.c)*3){const cs=zoneCells(N,z.c,7);for(const i of cs){if(!cellOk(N,'town',i)){doBuild(N,'town',i);break;}}}
+  // 주택이 많이 모이면 마을(도시)이 생기고, 더 모이면 도시가 커져요
+  const nd=cityNeed(N,z.c),ci=cityOf(z.c,5);
+  if(ci<0&&nd.ok){G.newCities=G.newCities||[];const k=G.newCities.filter(d=>d.n===N.id).length+1;const base=N.name.replace(/ (제국|왕국|왕조)$/,'');const nm=`${base} 새마을 ${k}`;G.newCities.push({c:z.c,nm,n:N.id,k:'city'});ensureCities();if(N.id===ME)feed(`🏘️ 집이 많이 모여 「${nm}」이(가) 생겼어요!`);}
+  else if(ci>=0&&G.owner[CITIES[ci].c]===N.id&&G.cityLv[ci]<4&&nd.req[0][1]>=G.cityLv[ci]*4+3){G.cityLv[ci]++;if(N.id===ME)feed(`🏘️ 집이 늘어 ${cityName(ci)}이(가) ${G.cityLv[ci]}단계로 커졌어요!`);}}}
 function roadBonus(N){return 1+Math.min(0.6,(N.links||0)*0.06);}
 // 도시를 빼앗으면 둘레 땅을 함께 차지하고, 빼앗긴 나라는 힘이 크게 빠져요
 function onCityTaken(i,A,B){if(NET.mode==='client'||G._cityCap)return;const ci=CITYAT[i];if(ci<0)return;const lv=G.cityLv[ci];G._cityCap=1;
  try{G.cityDmg[ci]=Math.min(1,G.cityDmg[ci]+0.45);
   if(A){const k=kid(A)?0.3:1;A.stab=Math.max(0,A.stab-5*lv*k);A.weary=Math.min(100,A.weary+3*lv);A.money*=1-0.06*lv*k;A.pop*=1-0.01*lv*k;}
-  if(A&&B){const max=Math.round(CF*(0.6+0.4*lv)),q=[i],seen=new Set([i]);let n=0;while(q.length&&n<max){const c=q.shift();if(c!==i){if(G.owner[c]!==A.id)continue;if(kid(A)&&c===A.cap)continue;_setOwner(c,B.id);n++;}for(const j of NB[c])if(!seen.has(j)){seen.add(j);q.push(j);}}}
+  if(A&&B&&REGCELLS[ci]){for(const c of REGCELLS[ci]){if(G.owner[c]!==A.id||c===i)continue;if(kid(A)&&c===A.cap)continue;if(CITYAT[c]>=0)continue;_setOwner(c,B.id);}}
   if(A&&B&&(A.human||B.human||lv>=3))log(`🏙️ ${B.name}이(가) ${A.name}의 도시 ${cityName(ci)}을(를) 차지했어요!`,[A.id,B.id],lv>=3);
  }finally{G._cityCap=0;}}
 function askCityFix(ci){if(UI.cfixT!=null&&G.day-UI.cfixT<40)return;UI.cfixT=G.day;const N=G.nations[ME];
  showModal(`<h2>🏙️ ${esc(cityName(ci))}이(가) 부서졌어요!</h2><p>도시가 <b>${Math.round(G.cityDmg[ci]*100)}%</b> 부서져서 돈을 덜 벌어요.</p><p style="font-size:17px"><b>복구하겠습니까?</b> 💰${fmt(cityFixCost(N,ci))}</p><button class="btn g big" onclick="hideModal();act('cityFix',{i:${ci}})">🔧 복구하기</button><button class="btn w big" onclick="hideModal()">나중에</button>`);}
 // 도로 공사: 돈을 내면 시간이 걸려 길이 조금씩 놓여요
 function roadJobsDay(){if(!G.broads)return;let ch=false;for(const br of G.broads){if(br.d>=br.p.length)continue;const N=G.nations[br.n];if(!N||!N.alive)continue;br.acc=(br.acc||0)+br.rate*(spdMul(N,'l')*0.5+0.5);while(br.acc>=1&&br.d<br.p.length){br.acc-=1;br.d++;ch=true;}
-  if(br.d>=br.p.length&&N.id===ME)feed(`🛣️ 도로가 완성됐어요! 군대가 훨씬 빨리 지나가요`);}
+  if(br.d>=br.p.length&&N.id===ME)feed(br.k==='wall'?`🧱 성벽이 완성됐어요! 적이 넘어오기 아주 어려워요`:`🛣️ 도로가 완성됐어요! 군대가 훨씬 빨리 지나가요`);}
  if(ch){const k=roadKey()+'|'+G.broads.map(b=>b.d).join(',');if(k!==ROADKEY){ROADKEY=k;buildRoads();}}}
-function startRoad(N,c){ensureCities();c=landNear(c,3);if(c<0)return'땅을 골라 주세요';if(!N.cap||N.cap<0)return'수도가 없어요';
- if((G.broads||[]).filter(b=>b.n===N.id&&b.d<b.p.length).length>=3)return'도로 공사는 한 번에 3개까지 할 수 있어요';
+function startRoad(N,c,kind){const wall=kind==='wall',WN=wall?'성벽':'도로';ensureCities();c=landNear(c,3);if(c<0)return'땅을 골라 주세요';if(!N.cap||N.cap<0)return'수도가 없어요';
+ if((G.broads||[]).filter(b=>b.n===N.id&&b.d<b.p.length).length>=3)return'공사는 한 번에 3개까지 할 수 있어요';
  let src=N.cap,bd=1e9;for(let i=0;i<CITIES.length;i++){const C=CITIES[i];if(G.owner[C.c]!==N.id||COMP[C.c]!==COMP[c])continue;const d=cellDist(C.c,c);if(d<bd){bd=d;src=C.c;}}
- if(COMP[src]!==COMP[c])return'바다 건너에는 도로를 놓을 수 없어요';
+ if(COMP[src]!==COMP[c])return`바다 건너에는 ${WN}을 놓을 수 없어요`;
  const p=roadPath(src,c,15000);if(!p||p.length<2)return'그곳까지 길을 찾지 못했어요';
- let cost=0;for(const k of p)cost+=CCST[k];cost=Math.round(cost*25*eraMul(N)*(kid(N)?0.5:1));if(N.money<cost)return`💰 도로 공사비 ${fmt(cost)}이 필요해요`;
- N.money-=cost;G.broads=G.broads||[];const rate=(N.techs.engine?1.2:N.techs.steam?0.8:0.45)*(kid(N)?2:1);G.broads.push({n:N.id,p,d:0,rate,acc:0});
- return`🛣️ 도로 공사를 시작했어요! (${p.length}구간, 약 ${Math.ceil(p.length/rate)}일 걸려요)`;}
+ let cost=0;for(const k of p)cost+=CCST[k];cost=Math.round(cost*(wall?70:25)*eraMul(N)*(kid(N)?0.5:1));if(N.money<cost)return`💰 ${WN} 공사비 ${fmt(cost)}이 필요해요`;
+ N.money-=cost;G.broads=G.broads||[];const rate=(N.techs.engine?0.45:N.techs.steam?0.3:0.15)*(wall?0.6:1)*(kid(N)?1.5:1);G.broads.push({n:N.id,p,d:0,rate,acc:0,k:wall?'wall':'road'});
+ return`${wall?'🧱':'🛣️'} ${WN} 공사를 시작했어요! (${p.length}구간, 약 ${Math.ceil(p.length/rate)}일 걸려요)`;}
 // 그리기
 function drawRoadsCities(Z){if(!CITIES.length)return;const LT=THEME==='light';
  const sx=c=>screenX((c%W)+.5),sy=c=>V.oy+(((c/W)|0)+.5)*V.z;
@@ -1688,8 +1804,11 @@ function drawRoadsCities(Z){if(!CITIES.length)return;const LT=THEME==='light';
    else{ctx.strokeStyle=lv===1?(LT?'rgba(120,90,50,.6)':'rgba(225,205,160,.5)'):lv===2?(LT?'rgba(176,106,12,.85)':'rgba(245,200,100,.85)'):(LT?'rgba(220,80,30,.85)':'rgba(255,140,70,.9)');ctx.lineWidth=w;ctx.setLineDash(lv===1?[w*2.5,w*2]:[]);}
    ctx.stroke();}}
  ctx.setLineDash([]);
+ {const w=clamp(Z*0.3,2,7);for(const pass of[0,1]){ctx.beginPath();for(const R of ROADS){if(R.lv!==4)continue;let p0=null;for(const c of R.pts){const x=sx(c),y=sy(c);if(p0&&Math.abs(x-p0)<CW*0.5)ctx.lineTo(x,y);else ctx.moveTo(x,y);p0=x;}}
+  if(pass===0){ctx.strokeStyle='rgba(40,30,20,.75)';ctx.lineWidth=w+3;ctx.setLineDash([]);}else{ctx.strokeStyle=LT?'#9c8466':'#c9b08a';ctx.lineWidth=w;ctx.setLineDash([w*1.2,w*0.7]);}ctx.stroke();}ctx.setLineDash([]);
+  if(Z>=5){ctx.font=`800 ${clamp(Z*0.7,11,15)}px sans-serif`;for(const R of ROADS){if(R.lv!==4||!R.nm)continue;const c=R.pts[Math.floor(R.pts.length/2)],x=sx(c),y=sy(c);if(x<0||x>CW||y<0||y>CH)continue;ctx.lineWidth=3;ctx.strokeStyle=LT?'rgba(255,255,255,.9)':'rgba(6,9,16,.85)';ctx.strokeText(R.nm,x,y+14);ctx.fillStyle=LT?'#5b4636':'#e8d5b0';ctx.fillText(R.nm,x,y+14);}}}
  // 짓고 있는 도로: 남은 길은 점선
- for(const R of ROADS){if(R.lv!==3||!R.bld)continue;const br=(G.broads||[]).find(b=>b.n===R.nid&&b.full===R.full);if(!br)continue;ctx.beginPath();let p0=null;for(const k of br.p.slice(Math.max(0,br.d-1))){const c=nodeCell(k);if(c<0)continue;const x=sx(c),y=sy(c);if(p0&&Math.abs(x-p0)<CW*0.5)ctx.lineTo(x,y);else ctx.moveTo(x,y);p0=x;}ctx.strokeStyle='rgba(255,140,70,.55)';ctx.lineWidth=clamp(Z*0.12,1,3);ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
+ for(const R of ROADS){if((R.lv!==3&&!R.wall)||!R.bld)continue;if(R.wall&&false)continue;const br=(G.broads||[]).find(b=>b.n===R.nid&&b.full===R.full);if(!br)continue;ctx.beginPath();let p0=null;for(const k of br.p.slice(Math.max(0,br.d-1))){const c=nodeCell(k);if(c<0)continue;const x=sx(c),y=sy(c);if(p0&&Math.abs(x-p0)<CW*0.5)ctx.lineTo(x,y);else ctx.moveTo(x,y);p0=x;}ctx.strokeStyle='rgba(255,140,70,.55)';ctx.lineWidth=clamp(Z*0.12,1,3);ctx.setLineDash([4,4]);ctx.stroke();ctx.setLineDash([]);}
  // 큰 길 이름
  if(Z>=7){ctx.font=`700 ${clamp(Z*0.6,10,14)}px sans-serif`;for(const R of ROADS){if(R.lv!==2||!R.nm)continue;const c=R.pts[Math.floor(R.pts.length/2)],x=sx(c),y=sy(c);if(x<0||x>CW||y<0||y>CH)continue;ctx.lineWidth=3;ctx.strokeStyle=LT?'rgba(255,255,255,.9)':'rgba(6,9,16,.85)';ctx.strokeText(R.nm,x,y-10);ctx.fillStyle=LT?'#92400e':'#f5d07a';ctx.fillText(R.nm,x,y-10);}}
  // 도시
@@ -1699,27 +1818,81 @@ function drawRoadsCities(Z){if(!CITIES.length)return;const LT=THEME==='light';
   ctx.beginPath();ctx.arc(x,y,r+1.6,0,7);ctx.fillStyle=LT?'#fff':'#0b1020';ctx.fill();ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle=N?N.color:'#888';ctx.fill();
   ctx.lineWidth=1.6;ctx.strokeStyle=o===ME?'#f5c84c':(LT?'#334155':'#e5e7eb');ctx.stroke();if(lv>=3){ctx.beginPath();ctx.arc(x,y,r*0.4,0,7);ctx.fillStyle=LT?'#fff':'#0b1020';ctx.fill();}
   if(flagOn&&N&&((G.core&&G.core[C.c]!==o)||C.made))drawFlagPole(N,x+r*0.6,y,fs*(0.8+0.08*lv),nowF);
+  if(G.cityHp&&G.cityHp[i]<cityHpMax(i)*0.98){const f=G.cityHp[i]/cityHpMax(i),bw=r*3;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(x-bw/2,y-r-7,bw,4);ctx.fillStyle=f>0.5?'#4ade80':f>0.25?'#fbbf24':'#ef4444';ctx.fillRect(x-bw/2,y-r-7,bw*f,4);}
   if(dm>0.15){ctx.strokeStyle='#ff5a5f';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();}
   if(Z>=5||(Z>=3&&lv>=3)){const fs=clamp(Z*0.62+lv,10,16);ctx.font=`700 ${fs}px sans-serif`;const nm=cityName(i);ctx.lineWidth=3;ctx.strokeStyle=LT?'rgba(255,255,255,.92)':'rgba(6,9,16,.85)';ctx.strokeText(nm,x,y+r+fs*0.75);ctx.fillStyle=LT?'#0f172a':'#f1f5f9';ctx.fillText(nm,x,y+r+fs*0.75);}}
 }
+function drawRegions(Z){if(!RBORD||Z<4.5)return;const LT=THEME==='light';const x0=Math.max(0,Math.floor(-V.ox/V.z))-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(0,Math.floor(-V.oy/V.z)),y1=Math.min(H-1,Math.ceil((CH-V.oy)/V.z));
+ ctx.beginPath();for(let y=y0;y<=y1;y++)for(let xx=x0;xx<=x1;xx++){const x=((xx%W)+W)%W,i=y*W+x,f=RBORD[i];if(!f)continue;const sx=screenX(x),sy=V.oy+y*V.z;
+  if(f&1){ctx.moveTo(sx+V.z,sy);ctx.lineTo(sx+V.z,sy+V.z);}if(f&2){ctx.moveTo(sx,sy+V.z);ctx.lineTo(sx+V.z,sy+V.z);}}
+ ctx.strokeStyle=LT?'rgba(40,40,60,.22)':'rgba(255,255,255,.16)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([]);}
+// 국경 전투: 양쪽 병사가 맞붙고, 센 쪽이 밀고 들어가요
+function drawClashes(Z,now){if(Z<2.4||!G.frontSample)return;const sz=clamp(Z*1.05,12,34);const ccx=c=>screenX((c%W)+.5),ccy=c=>V.oy+(((c/W)|0)+.5)*V.z;
+ for(const c of G.frontSample){const a=G.owner[c];if(!(a>0))continue;let j=-1;for(const n of NB[c]){const b=G.owner[n];if(b>0&&b!==a&&G.war[a]&&G.war[a][b]){j=n;break;}}if(j<0)continue;
+  const A=G.nations[a],B=G.nations[G.owner[j]];if(!A||!B)continue;const ax=ccx(c),ay=ccy(c),bx=ccx(j),by=ccy(j);if(ax<-40||ax>CW+40||ay<-40||ay>CH+40)continue;
+  let dx=bx-ax,dy=by-ay;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const mx=(ax+bx)/2,my=(ay+by)/2;
+  const pa=(A.landAtk+1)/(B.landDef+1),pb=(B.landAtk+1)/(A.landDef+1),push=clamp((pa-pb)/(pa+pb),-0.6,0.6);const ph=(now/260+c)%2<1;
+  const ox=mx+dx*sz*push*0.6,oy=my+dy*sz*push*0.6;
+  ctx.fillStyle='rgba(190,170,130,.28)';ctx.beginPath();ctx.ellipse(ox,oy+sz*0.3,sz*1.1,sz*0.28,0,0,7);ctx.fill();
+  const ia=landIcons(A),ib=landIcons(B),bob=Math.sin(now/120+c)*1.5;
+  drawSpr(ia[0],A.rgb,ox-dx*sz*0.42,oy-dy*sz*0.42+bob,sz,dx<0);drawSpr(ib[0],B.rgb,ox+dx*sz*0.42,oy+dy*sz*0.42-bob,sz,dx>0);
+  if(Z>=4){if(ia[1])drawSpr(ia[1],A.rgb,ox-dx*sz*0.9-dy*sz*0.35,oy-dy*sz*0.9+dx*sz*0.35,sz*0.8,dx<0);if(ib[1])drawSpr(ib[1],B.rgb,ox+dx*sz*0.9+dy*sz*0.35,oy+dy*sz*0.9-dx*sz*0.35,sz*0.8,dx>0);}
+  if(ph){ctx.fillStyle='rgba(255,230,120,.95)';ctx.beginPath();for(let k=0;k<8;k++){const an=k*Math.PI/4,rr=k%2?sz*0.08:sz*0.22;ctx.lineTo(ox+Math.cos(an)*rr,oy+Math.sin(an)*rr);}ctx.fill();}
+  // 돌파: 한쪽이 훨씬 세면 화살표
+  if(Math.abs(push)>0.25&&Z>=3.2){const s=push>0?1:-1,W2=push>0?A:B,sx=ox-dx*s*sz*0.2,sy2=oy-dy*s*sz*0.2,ex=ox+dx*s*sz*1.6,ey=oy+dy*s*sz*1.6;
+   ctx.strokeStyle=W2.color;ctx.lineWidth=Math.max(2.5,sz*0.16);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(sx,sy2);ctx.lineTo(ex,ey);ctx.stroke();
+   ctx.fillStyle=W2.color;ctx.beginPath();ctx.moveTo(ex+dx*s*sz*0.35,ey+dy*s*sz*0.35);ctx.lineTo(ex-dy*sz*0.28,ey+dx*sz*0.28);ctx.lineTo(ex+dy*sz*0.28,ey-dx*sz*0.28);ctx.fill();
+   if(Z>=5&&Math.abs(push)>0.4){ctx.font=`800 ${clamp(Z*0.6,10,14)}px sans-serif`;ctx.lineWidth=3;ctx.strokeStyle='rgba(6,9,16,.85)';ctx.strokeText('돌파!',ex,ey-sz*0.5);ctx.fillStyle='#ffd36a';ctx.fillText('돌파!',ex,ey-sz*0.5);}}}}
+function drawRad(Z,now){if(!G.rad)return;const ks=Object.keys(G.rad);if(!ks.length)return;const a=0.35+0.15*Math.sin(now/400);
+ for(const k of ks){const c=+k;if(G.rad[k]<=G.day)continue;const x=screenX(c%W),y=V.oy+((c/W)|0)*V.z;if(x<-V.z||x>CW||y<-V.z||y>CH)continue;ctx.fillStyle=`rgba(200,230,40,${a})`;ctx.fillRect(x,y,V.z,V.z);
+  if(V.z>=10){const cx=x+V.z/2,cy=y+V.z/2,r=V.z*0.32;ctx.fillStyle='rgba(20,20,20,.85)';for(let q=0;q<3;q++){const an=-Math.PI/2+q*2*Math.PI/3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,an-0.5,an+0.5);ctx.fill();}ctx.fillStyle='rgba(200,230,40,1)';ctx.beginPath();ctx.arc(cx,cy,r*0.22,0,7);ctx.fill();ctx.fillStyle='rgba(20,20,20,.85)';ctx.beginPath();ctx.arc(cx,cy,r*0.14,0,7);ctx.fill();}}}
+// 병사 점 전투: 전선마다 색이 다른 점(네모·세모) 병사들이 서로 밀어내요
+let FVIS=[],FVT=0;
+function scanFronts(){FVIS=[];const x0=Math.floor(-V.ox/V.z)-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(1,Math.floor(-V.oy/V.z)),y1=Math.min(H-2,Math.ceil((CH-V.oy)/V.z));
+ const step=Math.max(1,Math.floor(Math.sqrt((x1-x0)*(y1-y0)/60000)));
+ for(let y=y0;y<=y1;y+=step)for(let xx=x0;xx<=x1;xx+=step){const x=((xx%W)+W)%W,c=y*W+x,a=G.owner[c];if(!(a>0)||!G.war[a])continue;
+  for(const j of NB[c]){const b=G.owner[j];if(b>0&&b!==a&&G.war[a][b]){FVIS.push(c,j);break;}}if(FVIS.length>1000)return;}}
+function drawSwarm(Z,now){if(V.z<2.2){return;}if(now-FVT>700){FVT=now;scanFronts();}if(!FVIS.length)return;
+ const z=V.z,ds=clamp(z*0.24,2.4,7),cx=c=>screenX((c%W)+.5),cy=c=>V.oy+(((c/W)|0)+.5)*z;
+ for(let q=0;q<FVIS.length;q+=2){const c=FVIS[q],j=FVIS[q+1],A=G.nations[G.owner[c]],B=G.nations[G.owner[j]];if(!A||!B)continue;
+  const ax=cx(c),ay=cy(c),bx=cx(j),by=cy(j);if(ax<-20||ax>CW+20||ay<-20||ay>CH+20)continue;let dx=bx-ax,dy=by-ay;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const px=-dy,py=dx;
+  const pa=(A.landAtk+1)/(B.landDef+1),pb=(B.landAtk+1)/(A.landDef+1),push=clamp((pa-pb)/(pa+pb),-0.7,0.7);
+  const mx=(ax+bx)/2+dx*push*z*0.35,my=(ay+by)/2+dy*push*z*0.35;
+  ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=1;
+  for(let k=0;k<8;k++){const o=((k%4)-1.5)*0.26*z,w=Math.sin(now/170+k*1.7+c*0.37)*0.12*z,depth=(0.14+0.22*Math.floor(k/4)+0.06*(k%2))*z;
+   // 우리 쪽 병사 (네모)
+   ctx.fillStyle=A.color;const x1=mx-dx*(depth-w)+px*o,y1=my-dy*(depth-w)+py*o;ctx.fillRect(x1-ds/2,y1-ds/2,ds,ds);ctx.strokeRect(x1-ds/2,y1-ds/2,ds,ds);
+   // 상대 병사 (세모)
+   ctx.fillStyle=B.color;const x2=mx+dx*(depth+w)+px*o,y2=my+dy*(depth+w)+py*o;ctx.beginPath();ctx.moveTo(x2,y2-ds*0.6);ctx.lineTo(x2+ds*0.6,y2+ds*0.45);ctx.lineTo(x2-ds*0.6,y2+ds*0.45);ctx.closePath();ctx.fill();ctx.stroke();}
+  if(z>=5&&((now/90+c)%7)<1){ctx.fillStyle='rgba(255,240,170,.95)';ctx.fillRect(mx-1.5,my-1.5,3,3);}}}
 function drawNationFlags(Z,now){if(Z<2.6)return;const fs=clamp(Z*1.0,13,28);
  for(const N of G.nations){if(!N||!N.alive||N.cap<0||(N.filler&&Z<6))continue;const x=screenX((N.cap%W)+.5)+fs*0.55,y=V.oy+(((N.cap/W)|0)+.5)*V.z;if(x<-40||x>CW+40||y<-40||y>CH+40)continue;drawFlagPole(N,x,y,fs,now);
   for(const c of(N._occF||[])){const cx=screenX((c%W)+.5),cy=V.oy+(((c/W)|0)+.5)*V.z;if(cx<-40||cx>CW+40||cy<-40||cy>CH+40)continue;if(G.owner[c]===N.id)drawFlagPole(N,cx,cy,fs*0.8,now);}}}
 function cityCard(N,c){ensureCities();const ci=cityOf(c,4);if(ci<0)return'';const C=CITIES[ci],o=G.owner[C.c],lv=G.cityLv[ci],dm=G.cityDmg[ci],mine=o===ME;
  let h=`<div class="card" style="margin-top:8px"><div class="t">🏙️ ${esc(cityName(ci))} <span class="tag">${lv}단계</span>${C.coast?'<span class="tag ally">해안</span>':''}${C.coast&&C.timber?'<span class="tag inf">목재 조선소</span>':''}</div>
- <div class="s">${o>0?esc(G.nations[o].name)+'의 도시':'주인 없는 도시'} · 하루 수입 +${fmt(Math.pow(lv,1.6)*(1-dm)*0.6*eraMul(N))}${dm>0.01?` · <span class="neg">${Math.round(dm*100)}% 부서짐</span>`:''}<br>${C.coast?(C.timber?'산과 숲이 가까워 나무배(갤리선·범선)를 만들 수 있어요':'해안 도시라 배를 만들 수 있어요 (나무배는 숲·산이 가까운 해안 도시가 필요해요)'):'바다와 멀어 배는 못 만들어요'}<br>도시를 빼앗으면 둘레 땅도 함께 차지해요.</div>`;
+ <div class="s">${o>0?esc(G.nations[o].name)+'의 도시':'주인 없는 도시'} · 하루 수입 +${fmt(Math.pow(lv,1.8)*(1-dm)*2.5*eraMul(N))}${dm>0.01?` · <span class="neg">${Math.round(dm*100)}% 부서짐</span>`:''}<br>${C.coast?(C.timber?'산과 숲이 가까워 나무배(갤리선·범선)를 만들 수 있어요':'해안 도시라 배를 만들 수 있어요 (나무배는 숲·산이 가까운 해안 도시가 필요해요)'):'바다와 멀어 배는 못 만들어요'}<br>🗺️ 이 도시의 지역: ${REGCELLS[ci]?REGCELLS[ci].length:0}칸 — 함락시키면 지역 전체를 차지해요<br>🏯 성벽 내구도 <b>${Math.round(G.cityHp?G.cityHp[ci]:0)}/${cityHpMax(ci)}</b> — 적이 둘러싸면 줄어들고, 0이 되면 함락돼요. 도시를 빼앗으면 둘레 땅도 함께 차지해요.</div>`;
  if(mine){h+=`<div class="row" style="margin-top:6px">${lv<6?`<button class="btn sm g" onclick="act('cityUp',{i:${ci}})">⬆️ 도시 키우기 💰${fmt(cityGrowCost(N,ci))}</button>`:''}${dm>0.01?`<button class="btn sm b" onclick="act('cityFix',{i:${ci}})">🔧 복구 💰${fmt(cityFixCost(N,ci))}</button>`:''}</div>`;}
  return h+'</div>';}
 
 function cityHome(N){ensureCities();const mine=[];for(let i=0;i<CITIES.length;i++)if(G.owner[CITIES[i].c]===N.id)mine.push(i);const dmg=mine.filter(i=>G.cityDmg[i]>0.05);
  const jobs=(G.broads||[]).filter(b=>b.n===N.id&&b.d<b.p.length);
  return`<div class="card"><div class="t">🏙️ 우리 도시 ${mine.length}곳 ${N.coastCity?'<span class="tag ally">⚓ 배 만들기 가능</span>':'<span class="tag war">해안 도시 없음</span>'}</div>
- <div class="s">도시 수입 하루 +${fmt(N.rate.cty||0)} · 도로로 이어진 도시 ${N.links||0}쌍 (공장·연구 +${Math.round((roadBonus(N)-1)*100)}%)<br>${mine.slice().sort((a,b)=>G.cityLv[b]-G.cityLv[a]).slice(0,6).map(i=>`${CITIES[i].castle?'🏯':'🏙️'}${esc(cityName(i))} ${G.cityLv[i]}단계`).join(' · ')}${mine.length>6?' …':''}</div>
+ <div class="s">🏆 세계 국력 순위 <b>${powerRank(N)}위</b> — 땅이 작아도 도시를 많이·크게 키우면 최강국이 돼요<br>도시 수입 하루 +${fmt(N.rate.cty||0)} · 연구 +${Math.round(Math.min(0.8,(N.cityLvSum||0)*0.02)*100)}% · 도로로 이어진 도시 ${N.links||0}쌍 (공장·연구 +${Math.round((roadBonus(N)-1)*100)}%)<br>${mine.slice().sort((a,b)=>G.cityLv[b]-G.cityLv[a]).slice(0,6).map(i=>`${CITIES[i].castle?'🏯':'🏙️'}${esc(cityName(i))} ${G.cityLv[i]}단계`).join(' · ')}${mine.length>6?' …':''}</div>
  <div class="s">지도에서 도시를 눌러 키우거나 복구해요. 우리 땅을 누르면 ${castleEra()?'성을 쌓을':'새 도시를 세울'} 수 있고, 아무 곳이나 누르면 도로를 놓을 수 있어요.</div>
  ${dmg.length?`<div class="s neg" style="margin-top:4px">부서진 도시: ${dmg.slice(0,4).map(i=>`${esc(cityName(i))} ${Math.round(G.cityDmg[i]*100)}%`).join(', ')}</div><button class="btn sm b" style="margin-top:4px" onclick="act('cityFixAll')">🔧 모두 복구하기</button>`:''}
  ${jobs.length?`<div class="s" style="margin-top:6px">🛣️ 도로 공사 중: ${jobs.map(b=>Math.round(b.d/b.p.length*100)+'%').join(', ')}</div>`:''}</div>`;}
+// 도시를 세우려면 근처(반경 6칸)에 주거지·공업·산업 건물이 어느 정도 모여 있어야 해요
+function cityNeed(N,c){const x0=c%W,y0=(c/W)|0,n={town:0,farm:0,fac:0,ind:0};
+ for(let dy=-6;dy<=6;dy++){const y=y0+dy;if(y<0||y>=H)continue;for(let dx=-6;dx<=6;dx++){const i=y*W+((x0+dx)%W+W)%W;if(G.owner[i]!==N.id)continue;const o=G.bc&&G.bc.get(i);if(!o)continue;
+  n.town+=(o.town||0)+(o.hospital||0);n.farm+=o.farm||0;n.fac+=(o.factory||0)+(o.lab||0)+(o.barracks||0);n.ind+=(o.mine||0)+(o.well||0)+(o.port||0);}}
+ const ind=!!N.techs.industry;const req=ind?[['🏘️ 주거',n.town,3],['🏭 공업',n.fac,2],['⛏️ 산업',n.ind,1]]:[['🏘️ 주거',n.town,2],['🌾 농업',n.farm,2]];
+ return{ok:req.every(r=>r[1]>=r[2]),txt:req.map(r=>`${r[0]} ${Math.min(r[1],r[2])}/${r[2]}`).join(' · '),req};}
+function powerScore(N){let cs=0;if(CITIES.length)for(let i=0;i<CITIES.length;i++)if(G.owner[CITIES[i].c]===N.id)cs+=Math.pow(G.cityLv[i],1.8)*(1-G.cityDmg[i]*0.5);
+ return N.cells*0.4+cs*6+(N.landAtk+N.landDef+N.air+N.nav)/200+N.money/(2000*eraMul(N));}
+function powerRank(N){const L=G.nations.filter(n=>n&&n.alive&&!n.filler);const me=powerScore(N);return 1+L.filter(n=>n!==N&&powerScore(n)>me).length;}
 function castleEra(){return curYear()<1600;}
-function foundCity(N,c){ensureCities();if(c==null||G.owner[c]!==N.id||!LAND[c])return'우리 땅을 골라 주세요';const near=cityOf(c,6);if(near>=0)return`${cityName(near)}이(가) 너무 가까워요. 조금 떨어진 곳에 지어 주세요`;
+function foundCity(N,c){ensureCities();if(c==null||G.owner[c]!==N.id||!LAND[c])return'우리 땅을 골라 주세요';const near=cityOf(c,4);if(near>=0)return`${cityName(near)}이(가) 너무 가까워요. 조금 떨어진 곳에 지어 주세요`;
+ if(NET.mode!=='client'){const nd=cityNeed(N,c);if(!nd.ok)return`🏗️ 근처에 건물이 더 필요해요: ${nd.txt} (단지 짓기를 이용해 보세요)`;}
  const castle=castleEra(),desert=!castle&&TERR[c]===2&&curYear()>=1950,cost=Math.round((castle?600:1500)*eraMul(N)*CLIMATE[CLIM[c]].c*(desert?3:1));if(N.money<cost)return`💰 ${castle?'성':'도시'}을 지으려면 ${fmt(cost)}이 필요해요`;
  N.money-=cost;G.newCities=G.newCities||[];const k=G.newCities.filter(d=>d.n===N.id).length+1;const base=N.name.replace(/ (제국|왕국|왕조)$/,'');
  const nm=castle?`${base} ${['산','평','안','백','국','장','오','용'][k%8]}${k>8?k:''}성`:desert?`${base} 사막 미래도시 ${k}`:`${base} 신도시 ${k}`;G.newCities.push({c,nm,n:N.id,k:castle?'castle':'city'});ensureCities();if(desert){const ci=CITYAT[c];if(ci>=0)G.cityLv[ci]=3;}
@@ -1735,7 +1908,8 @@ function simDay(){
   for(const a of G.conqQ){if(!G.war[a][G.conq]&&W0&&W0.alive){G.war[a][G.conq]=G.war[G.conq][a]=1;G.warStart[a][G.conq]=G.warStart[G.conq][a]=G.day;}}
   if(!G.conqQ.length&&W0&&W0.alive){G.conqDone=1;log(`🏆 ${W0.name}이(가) 세계 연합군을 모두 물리쳤어요! 세계 정복 완료!`,[G.conq],true);}}
  const me=G.nations[ME];
- if(me&&!G.won&&me.alive){let tot=0,c=0;for(const N of G.nations)if(N){tot+=N.cells;}if(me.cells>tot*0.5){G.won=true;showModal(`<h2>🏆 세계 최강국!</h2><p>${esc(me.name)}이(가) 세계 땅의 절반을 차지했어요!<br><b>세계 정복</b>이 열렸어요. 누르면 나머지 모든 나라가 동맹을 맺고 우리와 마지막 전쟁을 해요!</p><button class="btn big" onclick="hideModal();act('conquer')">🌍 세계 정복하기</button><button class="btn w big" onclick="hideModal()">나중에</button>`);}}
+ if(me&&!G.won&&me.alive){let tot=0,c=0;for(const N of G.nations)if(N){tot+=N.cells;}if(me.cells>tot*0.5){G.won=true;showModal(`<h2>🏆 세계 최강국!</h2><p>${esc(me.name)}이(가) 세계 땅의 절반을 차지했어요!<br>세계의 <b>80%</b>를 차지하면 <b>세계 정복</b>이 열려요.</p><button class="btn g big" onclick="hideModal()">계속 하기</button>`);}}
+ if(me&&me.alive&&!G.conq&&!G.conqAsk&&me.cells>0&&conquestShare(ME)>=0.8){G.conqAsk=1;showModal(`<h2>🌍 세계 정복이 열렸어요!</h2><p>${esc(me.name)}이(가) 세계의 80%를 차지했어요!<br>누르면 나머지 나라가 모두 동맹을 맺고 우리와 마지막 전쟁을 해요.</p><button class="btn big" onclick="hideModal();act('conquer')">⚔️ 세계 정복하기</button><button class="btn w big" onclick="hideModal()">나중에</button>`);}
  if(me&&!me.alive&&!G.lostShown){G.lostShown=true;showEnding(false);}
 }
 const SPEEDS=[0,1,2,3,5];
@@ -1771,6 +1945,7 @@ const TPAT=[[1,1,1,1,1,1,1,1,1],[1.16,1.07,0.97,1.05,0.95,0.88,0.96,0.88,0.82],[
 function paintCell(i){
  const d=IMG.data,cw=W*CPX,o=G.owner[i],x=i%W,y=(i/W)|0;const LT=THEME==='light',c=o>0&&G.nations[o]?G.nations[o].rgb:(LT?[214,206,184]:[58,64,76]),s=SHADE[i]*(o>0&&!LT?0.86:1),gy=(c[0]+c[1]+c[2])/3;
  let R=(c[0]*0.82+gy*0.18)*s,Gc=(c[1]*0.82+gy*0.18)*s,B=(c[2]*0.82+gy*0.18)*s+6;const tr=TERR[i];
+ if(o===0&&G.rad&&G.rad[i]>G.day){R=110;Gc=120;B=40;}
  if(tr===1){R=R*0.62+70;Gc=Gc*0.62+58;B=B*0.62+46;}else if(tr===2){R=R*0.6+96;Gc=Gc*0.6+80;B=B*0.6+44;}
  const MP=TPAT[tr]||TPAT[0],ph=((x*7+y*13)%3);
  for(let yy=0;yy<CPX;yy++){let p=((y*CPX+yy)*cw+x*CPX)*4;for(let xx=0;xx<CPX;xx++){const m=MP[(yy*CPX+xx+ph*(tr===2?1:0))%9];d[p]=Math.min(255,R*m);d[p+1]=Math.min(255,Gc*m);d[p+2]=Math.min(255,B*m);d[p+3]=255;p+=4;}}
@@ -1824,7 +1999,7 @@ function render(now){
  if(Z>=5&&SCEN[G.sid].year>=1900){const sz=clamp(Z*0.7,12,30);ctx.globalAlpha=0.85;for(const c of OILSPOTS){const x=ccx(c),y=ccy(c);if(x<-20||x>CW+20||y<-20||y>CH+20)continue;const o=G.owner[c];drawSpr('well',o>0&&o!==SEA&&G.nations[o]?G.nations[o].rgb:[90,90,90],x,y,sz);}ctx.globalAlpha=1;}
  // 전선 표시
  const blink=0.55+0.45*Math.sin(now/250);ctx.globalAlpha=blink;ctx.font=`${clamp(Z*1.1,11,22)}px sans-serif`;
- for(const c of G.frontSample)cSwords(ccx(c),ccy(c),clamp(Z*1.1,11,22));ctx.globalAlpha=1;
+ if(Z<2.4)for(const c of G.frontSample)cSwords(ccx(c),ccy(c),clamp(Z*1.1,11,22));ctx.globalAlpha=1;
  // 공격 목표
  const me=G.nations[ME];if(me)for(const id in me.focus){const c=me.focus[id];cTarget(ccx(c),ccy(c),clamp(Z*1.4,16,40));}
  // 우리 건물 (한 칸에 그림으로)
@@ -1837,7 +2012,7 @@ function render(now){
    if(tot>1&&V.z>=6){const bx=x+clamp(V.z*1.7,16,46)*0.38,by=y-clamp(V.z*1.7,16,46)*0.38,rr=Math.max(6,V.z*0.2);ctx.fillStyle='#d99a2b';ctx.beginPath();ctx.arc(bx,by,rr,0,7);ctx.fill();ctx.fillStyle='#120c02';ctx.font=`900 ${rr*1.3}px sans-serif`;ctx.fillText(tot,bx,by+1);ctx.font=`${fs}px sans-serif`;}}}
  // 수도
  if(Z>=3){const old={old:OLD_ERAS.includes(G.sid)};for(const N of G.nations){if(!N||!N.alive||N.cap<0)continue;const sz=clamp(Z*(N.filler?1.1:1.7),12,N.id===ME?46:38);if(N.filler&&Z<8)continue;drawSpr('city',N.rgb,ccx(N.cap),ccy(N.cap)-sz*0.15,sz,false,old);if(N.id===ME){cCrown(ccx(N.cap),ccy(N.cap)-sz*0.75,sz*0.5);}}}
- drawNationFlags(Z,now);
+ drawRegions(Z);drawRad(Z,now);drawSwarm(Z,now);drawNationFlags(Z,now);drawClashes(Z,now);
  // 움직이는 부대
  drawStacks(now,Z);
  // 이름
@@ -1847,8 +2022,13 @@ function render(now){
  // 선택
  if(UI.sel!=null){const x=screenX((UI.sel%W)+.5),y=V.oy+(((UI.sel/W)|0)+.5)*V.z,r=Math.max(7,V.z*0.7);ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();}
  // 효과
- G.fx=G.fx.filter(f=>now-f.t<(f.k==='s'?4200:2600));
+ G.fx=G.fx.filter(f=>now-f.t<(f.k==='s'?4200:f.k==='n'?6000:2600));
  for(const f of G.fx){const age=now-f.t;
+  if(f.k==='n'){if(age>6000)continue;const x=ccx(f.c),y=ccy(f.c),q=age/6000,rr=Math.max(V.z*SC*0.25,V.z*(f.r*2+1)*0.5);ctx.globalAlpha=q<0.08?1:Math.max(0,1-q);
+   if(q<0.15){ctx.fillStyle='rgba(255,255,240,.9)';ctx.beginPath();ctx.arc(x,y,Math.max(4,rr*(1+q*20)),0,7);ctx.fill();}
+   const h=Math.max(20,rr*3)*(0.4+q),cw=Math.max(14,rr*1.6)*(0.6+q);ctx.fillStyle='rgba(120,100,90,.85)';ctx.fillRect(x-cw*0.12,y-h,cw*0.24,h);
+   const g=ctx.createRadialGradient(x,y-h,2,x,y-h,cw);g.addColorStop(0,'rgba(255,200,120,.95)');g.addColorStop(0.5,'rgba(200,110,70,.9)');g.addColorStop(1,'rgba(90,80,80,.2)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y-h,cw,cw*0.6,0,0,7);ctx.fill();
+   ctx.fillStyle='rgba(150,130,120,.6)';ctx.beginPath();ctx.ellipse(x,y,cw*1.3*(0.5+q),cw*0.3,0,0,7);ctx.fill();ctx.globalAlpha=1;continue;}
   if(f.k==='a'){const A=G.nations[f.n];if(!A||age>2400)continue;const x=ccx(f.c),y=ccy(f.c);if(x<-40||x>CW+40||y<-40||y>CH+40)continue;const sz=clamp(Z*1.3,14,40),q=Math.max(0,age/2400);ctx.globalAlpha=q<0.8?1:(1-q)*5;
    ctx.fillStyle='rgba(200,180,140,.35)';ctx.beginPath();ctx.ellipse(x,y+sz*0.35,sz*0.7*(0.6+q),sz*0.2,0,0,7);ctx.fill();
    const ic=landIcons(A);drawSpr(ic[0],A.rgb,x-sz*0.28+q*sz*0.5,y+Math.sin(age/90)*1.5,sz,false);if(Z>=4)drawSpr(ic[ic.length>1?1:0],A.rgb,x+sz*0.22+q*sz*0.5,y+sz*0.12+Math.cos(age/90)*1.5,sz*0.85,false);ctx.globalAlpha=1;}
@@ -2065,7 +2245,7 @@ function tabHome(N){
  return `<h3>${flagHtml(N)} ${esc(N.name)} <span class="tag">${rankOf(N)}</span> <span class="tag">${SCEN[G.sid].n}</span></h3>${traitHtml(N)}
  ${cityHome(N)}
  ${(()=>{if(G.conqDone&&G.conq===ME)return'';const sh=conquestShare(ME);if(G.conq===ME)return`<div class="card" style="border-color:rgba(229,72,77,.6)"><div class="t">⚔️ 세계 대전 중</div><div class="s">세계 연합군 ${G.conqQ?G.conqQ.length:0}개 나라와 싸우고 있어요. 모두 물리치거나 92%를 차지하면 통일!</div><div class="row" style="margin-top:6px"><div class="bar"><i style="width:${Math.min(100,sh/0.92*100)}%"></i></div><b>${Math.round(sh*100)}%</b><span class="muted">/ 92%</span></div></div>`;
-  return`<div class="card" style="border-color:${sh>=0.5?'var(--accent)':'var(--line)'}"><div class="row"><div style="flex:1"><div class="t">🌍 세계 정복</div><div class="s">${sh>=0.5?'열렸어요! 누르면 나머지 모든 나라가 동맹을 맺고 우리와 전쟁해요.':'세계의 50%를 차지하면 열려요'}</div></div>${sh>=0.5?`<button class="btn" onclick="act('conquer')">⚔️ 세계 정복하기</button>`:''}</div><div class="row" style="margin-top:6px"><div class="bar"><i style="width:${Math.min(100,sh/0.5*100)}%"></i></div><b>${Math.round(sh*100)}%</b><span class="muted">/ 50%</span></div></div>`;})()}
+  return`<div class="card" style="border-color:${sh>=0.8?'var(--accent)':'var(--line)'}"><div class="row"><div style="flex:1"><div class="t">🌍 세계 정복</div><div class="s">${sh>=0.8?'열렸어요! 누르면 나머지 모든 나라가 동맹을 맺고 우리와 전쟁해요.':'세계의 80%를 차지하면 열려요'}</div></div>${sh>=0.8?`<button class="btn" onclick="act('conquer')">⚔️ 세계 정복하기</button>`:''}</div><div class="row" style="margin-top:6px"><div class="bar"><i style="width:${Math.min(100,sh/0.8*100)}%"></i></div><b>${Math.round(sh*100)}%</b><span class="muted">/ 80%</span></div></div>`;})()}
  ${missionCard(N)}
  <div class="card" style="border-color:rgba(47,191,113,.45)"><div class="t">🤖 자동 도우미</div><div class="s">켜 두면 컴퓨터가 대신 해 줘요. 나는 공격할 나라만 고르면 돼요!</div>
  <div class="row" style="margin-top:6px">${autoBtn(N,'army','🪖 군대')}${autoBtn(N,'res','🔬 연구')}${autoBtn(N,'build','🏗️ 건설')}</div></div>
@@ -2171,18 +2351,19 @@ function tabMenu(N){
  return h;
 }
 function getPw(){try{return localStorage.getItem('wg_cheatpw')||'1234';}catch(e){return'1234';}}
-function unlockCheat(){const v=(($('#cpw')||{}).value||'').trim();if(v===getPw()){UI.cheatOpen=true;toast('🔓 치트 모드가 열렸어요!');renderPanel(true);}else toast('❌ 비밀번호가 틀렸어요');}
+function getPw2(){try{return localStorage.getItem('wg_cheatpw2')||'5678';}catch(e){return'5678';}}
+function unlockCheat(){const v=(($('#cpw')||{}).value||'').trim();if(v===getPw2()){UI.cheatOpen=true;UI.cheatLv=2;toast('🔓 2단계 치트가 열렸어요! (모든 치트)');renderPanel(true);}else if(v===getPw()){UI.cheatOpen=true;UI.cheatLv=1;toast('🔓 1단계 치트가 열렸어요! (AI는 못 써요)');renderPanel(true);}else toast('❌ 비밀번호가 틀렸어요');}
 function cheatPanel(N){
  if(!N)return'<div class="muted">나라를 먼저 골라 주세요</div>';
- return `<div class="s">치트 코드를 누르거나 직접 숫자를 바꿔요.</div><div class="row" style="margin-top:6px">${Object.entries(CHEATS).map(([c,d])=>`<button class="btn sm b" onclick="act('cheat',{c:'${c}'})" title="${d}">${c}</button>`).join('')}</div>
+ return `<div class="s"><span class="tag ${UI.cheatLv===2?'war':''}">${UI.cheatLv===2?'2단계 · 모든 치트':'1단계 · AI 기술·AI 군대는 못 써요'}</span> 치트 코드를 누르거나 직접 숫자를 바꿔요.</div><div class="row" style="margin-top:6px">${Object.entries(CHEATS).map(([c,d])=>`<button class="btn sm b" onclick="act('cheat',{c:'${c}',lv:UI.cheatLv||1})" title="${d}">${c}</button>`).join('')}</div>
  <div class="s" style="margin-top:4px">${Object.entries(CHEATS).map(([c,d])=>`<b>${c}</b>: ${d}`).join(' · ')}</div>
  <div class="row" style="margin-top:8px"><select id="cf" style="font-size:15px;padding:8px;border-radius:10px;border:2px solid var(--line)">
  <option value="money">💰 돈</option><option value="pop">👨‍👩‍👧 인구(만 명)</option><option value="mp">🪖 병사 인원(명)</option><option value="food">🌾 식량</option><option value="iron">⛏️ 철</option><option value="oil">🛢️ 석유</option><option value="res">🔬 연구량 더하기</option><option value="dev">📈 경제 수준(0.1~5)</option></select>
- <input type="number" id="cv" placeholder="숫자" style="flex:1;min-width:90px"><button class="btn sm" onclick="act('cheat',{c:'set',f:$('#cf').value,v:$('#cv').value})">바꾸기</button></div>
- <div class="row" style="margin-top:8px"><input type="text" id="ccode" placeholder="치트 코드 입력" style="flex:1"><button class="btn sm" onclick="act('cheat',{c:$('#ccode').value.trim()})">입력</button></div>
+ <input type="number" id="cv" placeholder="숫자" style="flex:1;min-width:90px"><button class="btn sm" onclick="act('cheat',{c:'set',f:$('#cf').value,v:$('#cv').value,lv:UI.cheatLv||1})">바꾸기</button></div>
+ <div class="row" style="margin-top:8px"><input type="text" id="ccode" placeholder="치트 코드 입력" style="flex:1"><button class="btn sm" onclick="act('cheat',{c:$('#ccode').value.trim(),lv:UI.cheatLv||1})">입력</button></div>
  <div class="row" style="margin-top:8px"><input type="password" id="cnew" placeholder="새 비밀번호" style="flex:1"><button class="btn sm w" onclick="setPw()">비밀번호 바꾸기</button><button class="btn sm w" onclick="UI.cheatOpen=false;renderPanel(true)">닫기</button></div>`;
 }
-function setPw(){const v=($('#cnew')||{}).value||'';if(v.length<2){toast('2글자 이상 넣어 주세요');return;}try{localStorage.setItem('wg_cheatpw',v);toast('🔑 비밀번호를 바꿨어요');}catch(e){toast('이 화면에서는 저장할 수 없어요');}}
+function setPw(){const v=($('#cnew')||{}).value||'';if(v.length<2){toast('2글자 이상 넣어 주세요');return;}const k=UI.cheatLv===2?'wg_cheatpw2':'wg_cheatpw';if(v===(UI.cheatLv===2?getPw():getPw2())){toast('다른 단계 비밀번호와 달라야 해요');return;}try{localStorage.setItem(k,v);toast(`🔑 ${UI.cheatLv===2?2:1}단계 비밀번호를 바꿨어요`);}catch(e){toast('이 화면에서는 저장할 수 없어요');}}
 function goTo(c){if(c>=0){centerOn(c,Math.max(V.z,4));UI.sel=c;if(innerWidth<900)openTab(UI.tab);renderSheet();}}
 
 /* 지도를 눌렀을 때 */
@@ -2220,7 +2401,7 @@ function renderSheet(){
    if(ld<SLOTS){const opts=BLD_IDS.filter(b=>{const B=BLD[b];return!(B.t&&!N.techs[B.t])&&!cellOk(N,b,c)&&N.bld[b]<bldCap(N,b);});
     h+=`<div class="s" style="margin-top:6px"><b>여기에 짓기</b></div><div class="row" style="margin-top:4px">${opts.map(b=>`<button class="btn sm ${N.money>=bldCost(N,b,c)?'':'w'}" onclick="act('build',{b:'${b}',c:${c}})">${BLD[b].e} ${BLD[b].n} 💰${fmt(bldCost(N,b,c))}</button>`).join('')||'<span class="muted">지을 수 있는 건물이 없어요</span>'}</div>`;}}}
  h+=cityCard(N,c);
- if(N&&N.alive){h+=`<div class="row" style="margin-top:6px">${o===ME&&cityOf(c,6)<0?`<button class="btn sm" onclick="act('cityNew',{c:${c}})">${castleEra()?'🏯 여기에 성 쌓기':'🏙️ 여기에 도시 세우기'}</button>`:''}${o!==ME||ROAD[c]===0?`<button class="btn sm w" onclick="act('road',{c:${c}})">🛣️ 여기까지 도로 놓기</button>`:''}</div>`;}
+ if(N&&N.alive){h+=`<div class="row" style="margin-top:6px">${o===ME&&cityOf(c,4)<0?(()=>{const nd=cityNeed(N,c);return`<button class="btn sm" ${nd.ok?'':'disabled'} onclick="act('cityNew',{c:${c}})">${castleEra()?'🏯 여기에 성 쌓기':'🏙️ 여기에 도시 세우기'}</button><span class="muted" style="width:100%">${nd.ok?'조건을 채웠어요!':'근처에 필요한 건물'}: ${nd.txt}</span>`;})():''}${o!==ME||ROAD[c]===0?`<button class="btn sm w" onclick="act('road',{c:${c}})">🛣️ 여기까지 도로 놓기</button>`:''}${o===ME&&!WALL[c]?`<button class="btn sm w" onclick="act('wall',{c:${c}})">🧱 여기까지 성벽 쌓기</button>`:''}</div>`;}
  $('#sheet').innerHTML=h;$('#sheet').style.display='block';
 }
 
@@ -2249,6 +2430,7 @@ function renderMenu(){
   h=`<div class="title" style="font-size:26px">시대를 골라요</div>`+Object.entries(SCEN).map(([k,S])=>`<button class="scen ${MENU.sid===k?'on':''}" onclick="MENU.sid='${k}';renderMenu()"><b>${S.n} (${S.year}년)</b><div class="muted">${S.d} · 나라 ${S.list.length}개</div></button>`).join('')+
   `<div class="card"><div class="t">난이도</div><div class="row" style="margin-top:6px">${DIFF.map((d,i)=>`<button class="btn sm ${MENU.diff===i?'g':'w'}" onclick="MENU.diff=${i};renderMenu()">${d}</button>`).join('')}</div><div class="s">쉬움 (초등학생 추천): 자동 도우미가 켜지고, 연구·훈련이 2배 빠르고, 우리 군대가 더 세요. 컴퓨터 나라가 먼저 공격하지 않아요. 보통: 1년 뒤부터 공격받을 수 있어요.</div></div>
   <div class="card"><div class="row"><div style="flex:1"><div class="t">📅 기술 등장 연도 지키기</div><div class="s">켜면 실제 역사에서 나온 해가 되어야 기술을 연구할 수 있어요. 옛날 시대에서는 새 기술까지 아주 오래 걸려요.</div></div><button class="btn sm ${MENU.yl?'g':'w'}" onclick="MENU.yl=!MENU.yl;renderMenu()">${MENU.yl?'켜짐':'꺼짐'}</button></div></div>
+  <div class="card"><div class="row"><div style="flex:1"><div class="t">☢️ 원자폭탄</div><div class="s">허용하면 1945년 이후 원자폭탄·수소폭탄을 만들고 쏠 수 있어요. 맞은 곳은 건물이 모두 사라지고 주인 없는 땅이 돼요. 「미사일 방어 체계」로 막을 수 있어요.</div></div><button class="btn sm ${MENU.nuke?'r':'w'}" onclick="MENU.nuke=!MENU.nuke;renderMenu()">${MENU.nuke?'허용':'금지'}</button></div></div>
   <button class="btn big g" onclick="startPick()">다음 ▶ 나라 고르기</button><button class="btn big w" onclick="MENU.step='home';renderMenu()">◀ 뒤로</button>`;
  }else if(MENU.step==='pick'){
   const N=UI.pickId?G.nations[UI.pickId]:null;
@@ -2276,7 +2458,7 @@ function renderMenu(){
  else{$('#menu').style.pointerEvents='';b.style.background='';b.style.border='';b.style.boxShadow='';b.style.backdropFilter='';b.style.padding='';b.style.alignSelf='';b.style.maxHeight='';b.style.overflowY='';}
 }
 function setNick(v){MYNICK=(v||'').trim().slice(0,12)||MYNICK;try{localStorage.setItem('wg_nick',MYNICK);}catch(e){}}
-function startPick(){FEED.length=0;renderFeed();STK=[];initGame(MENU.sid,MENU.diff);G.yearLock=MENU.yl;ME=0;MAPDIRTY=true;UI.picking=true;UI.pickId=null;MENU.step='pick';const k=G.nations.find(n=>n&&n.name.includes('한'));centerOn(k?k.cap:LANDS[0],zmin()*2.5);V.oy=Math.min(V.oy,CH*0.25-(((k?k.cap:0)/W)|0)*V.z);clampView();renderMenu();}
+function startPick(){FEED.length=0;renderFeed();STK=[];initGame(MENU.sid,MENU.diff);G.yearLock=MENU.yl;G.nuke=!!MENU.nuke;G.rad={};ME=0;MAPDIRTY=true;UI.picking=true;UI.pickId=null;MENU.step='pick';const k=G.nations.find(n=>n&&n.name.includes('한'));centerOn(k?k.cap:LANDS[0],zmin()*2.5);V.oy=Math.min(V.oy,CH*0.25-(((k?k.cap:0)/W)|0)*V.z);clampView();renderMenu();}
 const CN_PAL=['#d62828','#f77f00','#fcbf49','#2a9d8f','#1d7a46','#3a86ff','#1d3557','#7209b7','#ff70a6','#ffffff','#111111','#8d6e63'];
 const CN_PAT=[['d','가운데 원'],['h','가로 줄'],['v','세로 줄'],['nc','십자'],['st','별'],['em','문장']];
 function cnSpec(){const c=UI.cn,a=CN_PAL[c.c1],b=CN_PAL[c.c2];return c.pat==='h'?['h',a,'#ffffff',b]:c.pat==='v'?['v',a,'#ffffff',b]:[c.pat,a,b];}
@@ -2350,13 +2532,13 @@ function unrleArr(s,a){let k=0;for(const tok of s.split(',')){const[x,y]=tok.spl
 function hasSave(){try{return!!localStorage.getItem('wg_save');}catch(e){return false;}}
 function saveGame(){
  try{const d={sid:G.sid,diff:G.diff,day:G.day,K:G.K,me:ME,own:rleLand(),n:G.nations.map(N=>N&&Object.fromEntries(SAVE_KEYS.map(k=>[k,N[k]]))),
-  war:G.war.map(a=>[...a]),ally:G.ally.map(a=>[...a]),rel:G.rel.map(a=>[...a]),truce:G.truce.map(a=>[...a]),ws:G.warStart.map(a=>[...a]),yl:G.yearLock===false?0:1,cq:G.conq||0,cqq:G.conqQ||[],cqd:G.conqDone?1:0,cl:G.cityLv,cd:G.cityDmg,nc:G.newCities||[],br:G.broads||[],cf:G.customFlags||{},log:G.log.slice(-40),bc:[...G.bc.entries()],dyn:G.nations.filter(N=>N&&N.dyn).map(N=>[N.id,N.name,N.rgb]),core:rleArr(G.core)};
+  war:G.war.map(a=>[...a]),ally:G.ally.map(a=>[...a]),rel:G.rel.map(a=>[...a]),truce:G.truce.map(a=>[...a]),ws:G.warStart.map(a=>[...a]),yl:G.yearLock===false?0:1,nk:G.nuke?1:0,rad:G.rad||{},cq:G.conq||0,cqq:G.conqQ||[],cqd:G.conqDone?1:0,cl:G.cityLv,cd:G.cityDmg,chp:G.cityHp,zn:G.zones||[],nc:G.newCities||[],br:G.broads||[],cf:G.customFlags||{},log:G.log.slice(-40),bc:[...G.bc.entries()],dyn:G.nations.filter(N=>N&&N.dyn).map(N=>[N.id,N.name,N.rgb]),core:rleArr(G.core)};
   localStorage.setItem('wg_save',JSON.stringify(d));toast('💾 저장했어요!');}catch(e){toast('저장하지 못했어요 (이 화면에서는 저장이 안 될 수 있어요)');}
 }
 function loadGame(){
  let d;try{d=JSON.parse(localStorage.getItem('wg_save')||'null');}catch(e){}if(!d){toast('저장한 게임이 없어요');return;}
  newG(d.sid,d.diff);(d.dyn||[]).forEach(([id,nm,rgb])=>{const N=staticNation(id,[nm,0,0,1,0,0.5,0.5,0,1,[]],id);N.rgb=rgb;N.color=`rgb(${rgb})`;N.dyn=1;const t=traitsFor(nm,d.sid);N.traits=t.tr;N.tm=t.tm;G.nations[id]=N;});growMatrices();
- G.day=d.day;G.K=d.K;G.yearLock=d.yl!==0;G.conq=d.cq|0;G.conqQ=d.cqq||[];G.conqDone=d.cqd|0;G.newCities=d.nc||[];G.broads=d.br||[];G.customFlags=d.cf||{};G.cityLv=d.cl||null;G.cityDmg=d.cd||null;CITY_SID=null;unrleLand(d.own);G.core=Uint8Array.from(G.owner);if(d.core)unrleArr(d.core,G.core);G.occDay=new Int32Array(W*H).fill(d.day);
+ G.day=d.day;G.K=d.K;G.yearLock=d.yl!==0;G.nuke=!!d.nk;G.rad=d.rad||{};G.conq=d.cq|0;G.conqQ=d.cqq||[];G.conqDone=d.cqd|0;G.newCities=d.nc||[];G.broads=d.br||[];G.customFlags=d.cf||{};G.cityLv=d.cl||null;G.cityDmg=d.cd||null;G.cityHp=d.chp||null;G.zones=d.zn||[];CITY_SID=null;unrleLand(d.own);G.core=Uint8Array.from(G.owner);if(d.core)unrleArr(d.core,G.core);G.occDay=new Int32Array(W*H).fill(d.day);
  for(const i of LANDS){const o=G.owner[i];if(o>0)addCell(G.nations[o],i,1);}
  d.n.forEach((s,i)=>{if(s&&G.nations[i])Object.assign(G.nations[i],s);});
  const cp=(dst,src)=>src.forEach((row,i)=>row.forEach((v,j)=>dst[i][j]=v));cp(G.war,d.war);cp(G.ally,d.ally);cp(G.rel,d.rel);cp(G.truce,d.truce);cp(G.warStart,d.ws);G.log=d.log||[];
@@ -2424,14 +2606,14 @@ function onHostPeers(ch){
 function emitSafe(topic,data){if(!NET.nr||!NET.nr.connected())return;const s=JSON.stringify(data);if(s.length>3900)return;NET.nr.emit(topic,data).catch(()=>{});}
 function sendDelta(){
  if(!G)return;const ent=[];for(const[i,o]of NET.chg){ent.push(i.toString(36)+':'+o.toString(36));NET.chg.delete(i);if(ent.length>=280)break;}
- const fx=NET.fxq.splice(0,8).map(f=>f.k==='m'?['m',f.a,f.b,f.ok,f.pl?1:0]:f.k==='s'?['s',f.a,f.b]:f.k==='a'?['a',f.c,f.n]:[f.k,f.c]);
+ const fx=NET.fxq.splice(0,8).map(f=>f.k==='m'?['m',f.a,f.b,f.ok,f.pl?1:0]:f.k==='s'?['s',f.a,f.b]:f.k==='a'?['a',f.c,f.n]:f.k==='n'?['n',f.c,f.r]:[f.k,f.c]);
  let msg={t:G.day,c:ent.join(','),fx,fr:G.frontSample.slice(0,20),ev:NET.evq.splice(0,4)};
  if(JSON.stringify(msg).length>3900){msg.ev=[];msg.fr=[];}emitSafe('d',msg);
 }
 function sendSummary(){
  if(!G||NET.mode!=='host')return;const n=G.nations.length,w=[],al=[];
  for(let a=1;a<n;a++)for(let b=a+1;b<n;b++){if(G.war[a][b])w.push([a,b,G.warStart[a][b]]);if(G.ally[a][b])al.push([a,b]);}
- emitSafe('n',{s:G.sid,df:G.diff,t:G.day,sp:G.spd,pl:G.pl,w,al,ca:G.cheatAll?1:0,cq:G.conq||0,cqn:G.conqQ?G.conqQ.length:0,cqd:G.conqDone?1:0,cl:G.cityLv||[],cd:(G.cityDmg||[]).map(v=>Math.round(v*100)),nc:G.newCities||[],cf:G.customFlags||{},br:(G.broads||[]).map(b=>[b.n,b.d,b.p]),yl:G.yearLock===false?0:1,dy:G.nations.filter(N=>N&&N.dyn).map(N=>[N.id,N.name,N.rgb])});
+ emitSafe('n',{s:G.sid,df:G.diff,t:G.day,sp:G.spd,pl:G.pl,w,al,ca:G.cheatAll?1:0,cq:G.conq||0,cqn:G.conqQ?G.conqQ.length:0,cqd:G.conqDone?1:0,nk:G.nuke?1:0,rd:G.rad||{},cl:G.cityLv||[],cd:(G.cityDmg||[]).map(v=>Math.round(v*100)),ch:(G.cityHp||[]).map(v=>Math.round(v)),nc:G.newCities||[],cf:G.customFlags||{},br:(G.broads||[]).map(b=>[b.n,b.d,b.p]),yl:G.yearLock===false?0:1,dy:G.nations.filter(N=>N&&N.dyn).map(N=>[N.id,N.name,N.rgb])});
  const rows=G.nations.slice(1).filter(Boolean).map(N=>[N.id,N.alive?1:0,r1(N.cells),r2(N.pop),Math.round(N.landAtk),Math.round(N.landDef),Math.round(N.air),Math.round(N.nav),N.cap,r1(N.infC)]);
  for(let i=0;i<rows.length;i+=25)emitSafe('n2',rows.slice(i,i+25));
 }
@@ -2439,7 +2621,7 @@ function packPriv(N){const R=N.rate;return{m:r1(N.money),f:r1(N.food),i:r1(N.iro
  u:N.units.map(r1),q:N.queue.slice(0,20).map(q=>[q.k,q.n,r1(q.left),q.tot]),b:BLD_IDS.map(b=>N.bld[b]),tc:TECH_IDS.map(t=>N.techs[t]?1:0).join(''),rs:N.res,rp:N.res?r1(N.rp[N.res]||0):0,
  rt:[R.money,R.food,R.iron,R.oil,R.res,R.tax,R.fac,R.port,R.gold,R.up].map(r1),cn:[N.cells,N.farmC,N.ironC,N.oilC,N.goldC,N.coast],cap:N.cap,cl:N.colonize?1:0,fo:N.focus,
  rl:G.rel[N.id].slice(1).join(','),tr:Array.from(G.truce[N.id]).slice(1).map(v=>Math.max(0,v-G.day)).join(','),fl:[N.hungry?1:0,N.broke?1:0,N.oilShort?1:0],dv:N.dev,
- of:G.offers.filter(o=>o.to===N.id).map(o=>[o.id,o.from,o.type]),au:N.auto,gn:N.gain,nb:[...(N._nbr||[])],qd:N.qd||0,ft:r1(N.foodCap||0),ad:adminCap(N),up:N.up,ul:N.allUnits?1:0,rg:N.reign,oc:r1(N.occ),po:N.pol||0,em:(N.emb||[]).map(r1),df:N.dmgFac||0,sc:N.satCd||0,fb:r1(R.foodBuy||0),fl2:r2(N.famLoss||0)};}
+ of:G.offers.filter(o=>o.to===N.id).map(o=>[o.id,o.from,o.type]),au:N.auto,gn:N.gain,nb:[...(N._nbr||[])],qd:N.qd||0,ft:r1(N.foodCap||0),ad:adminCap(N),up:N.up,ul:N.allUnits||0,rg:N.reign,oc:r1(N.occ),po:N.pol||0,em:(N.emb||[]).map(r1),df:N.dmgFac||0,sc:N.satCd||0,fb:r1(R.foodBuy||0),fl2:r2(N.famLoss||0)};}
 function sendPrivates(){
  if(!G)return;for(const peer in NET.peerN){const N=G.nations[NET.peerN[peer]];if(!N)continue;
   emitSafe('p',{to:peer,a:NET.lastSeq[peer]||0,m:(NET.msgs[peer]||[]).splice(0,4),s:packPriv(N)});
@@ -2468,7 +2650,7 @@ function cliSummary(d){
  if(!SCEN[d.s])return;NET.hostSeen=Date.now();
  if(!G||G.sid!==d.s){newG(d.s,d.df);}
  (d.dy||[]).forEach(([id,nm,rgb])=>{if(!G.nations[id]&&Array.isArray(rgb)){while(G.nations.length<id){G.nations.push(null);}const N=staticNation(id,[String(nm).slice(0,20),0,0,1,0,0.5,0.5,0,1,[]],id);N.rgb=rgb.map(v=>v|0);N.color=`rgb(${N.rgb})`;N.dyn=1;const t=traitsFor(N.name,G.sid);N.traits=t.tr;N.tm=t.tm;G.nations[id]=N;growMatrices();}});
- G.yearLock=d.yl!==0;G.conq=d.cq|0;G.conqQ=new Array(d.cqn|0).fill(0);G.conqDone=d.cqd|0;if(d.cf){G.customFlags=d.cf;}if(d.cl){G.newCities=d.nc||[];G.broads=(d.br||[]).map(b=>({n:b[0],d:b[1],p:b[2]}));ensureCities();G.cityLv=d.cl;G.cityDmg=(d.cd||[]).map(v=>v/100);}G.day=d.t|0;G.spd=d.sp|0;G.pl=(d.pl&&typeof d.pl==='object')?d.pl:{};G.cheatAll=!!d.ca;const n=G.nations.length;
+ G.yearLock=d.yl!==0;G.nuke=!!d.nk;if(d.rd){const ch=JSON.stringify(d.rd)!==JSON.stringify(G.rad||{});G.rad=d.rd;if(ch)MAPDIRTY=true;}G.conq=d.cq|0;G.conqQ=new Array(d.cqn|0).fill(0);G.conqDone=d.cqd|0;if(d.cf){G.customFlags=d.cf;}if(d.cl){G.newCities=d.nc||[];G.broads=(d.br||[]).map(b=>({n:b[0],d:b[1],p:b[2]}));ensureCities();G.cityLv=d.cl;G.cityDmg=(d.cd||[]).map(v=>v/100);if(d.ch)G.cityHp=d.ch;}G.day=d.t|0;G.spd=d.sp|0;G.pl=(d.pl&&typeof d.pl==='object')?d.pl:{};G.cheatAll=!!d.ca;const n=G.nations.length;
  for(let a=0;a<n;a++){G.war[a].fill(0);G.ally[a].fill(0);}
  (d.w||[]).forEach(([a,b,s])=>{if(a<n&&b<n){G.war[a][b]=G.war[b][a]=1;G.warStart[a][b]=G.warStart[b][a]=s|0;}});
  (d.al||[]).forEach(([a,b])=>{if(a<n&&b<n)G.ally[a][b]=G.ally[b][a]=1;});
@@ -2482,7 +2664,7 @@ function cliN2(rows){for(const r of rows){const N=G.nations[r[0]];if(!N||N.id===
 function cliDelta(d){
  if(!G)return;G.day=d.t|0;
  if(NET.gotFull&&typeof d.c==='string'&&d.c){for(const tok of d.c.split(',')){const[a,b]=tok.split(':');const i=parseInt(a,36),o=parseInt(b,36);if(i>=0&&i<W*H&&LAND[i]&&o>=0&&o<G.nations.length){G.owner[i]=o;dirtyCell(i);}}}
- const now=performance.now();(d.fx||[]).forEach(f=>{if(f[0]==='m')G.fx.push({k:'m',a:f[1]|0,b:f[2]|0,ok:f[3],pl:f[4],t:now});else if(f[0]==='s')G.fx.push({k:'s',a:f[1]|0,b:f[2]|0,t:now});else if(f[0]==='a')G.fx.push({k:'a',c:f[1]|0,n:f[2]|0,t:now});else G.fx.push({k:['r','z'].includes(f[0])?f[0]:'c',c:f[1]|0,t:now});});
+ const now=performance.now();(d.fx||[]).forEach(f=>{if(f[0]==='m')G.fx.push({k:'m',a:f[1]|0,b:f[2]|0,ok:f[3],pl:f[4],t:now});else if(f[0]==='s')G.fx.push({k:'s',a:f[1]|0,b:f[2]|0,t:now});else if(f[0]==='a')G.fx.push({k:'a',c:f[1]|0,n:f[2]|0,t:now});else G.fx.push({k:['r','z','n'].includes(f[0])?f[0]:'c',c:f[1]|0,r:f[0]==='n'?(f[2]|0):0,t:now});});
  if(Array.isArray(d.fr))G.frontSample=d.fr.map(x=>x|0);
  (d.ev||[]).forEach(e=>{const ent={d:e[0]|0,t:String(e[1]).slice(0,200),ids:Array.isArray(e[2])?e[2]:[],big:!!e[3]};G.log.push(ent);if(G.log.length>120)G.log.shift();if(ent.ids.includes(ME)||ent.big)feed(ent.t);});
 }
