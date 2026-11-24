@@ -214,7 +214,7 @@ document.querySelectorAll('svg[data-k]').forEach(e=>e.innerHTML=ICP[e.dataset.k]
 let THEME='dark';try{THEME=localStorage.getItem('wc_theme')||'dark';}catch(e){}
 if(THEME==='light')document.body.classList.add('light');
 function setTheme(t){THEME=t;document.body.classList.toggle('light',t==='light');try{localStorage.setItem('wc_theme',t);}catch(e){}try{if(G&&typeof redrawCache==='function')redrawCache();}catch(e){}try{renderMenu();}catch(e){}try{if(G)renderPanel(true);}catch(e){}const m=document.querySelector('meta[name=theme-color]');if(m)m.content=t==='light'?'#ffffff':'#070b14';}
-function themeBtn(){return`<div class="row" style="justify-content:center;margin:8px 0"><button class="btn sm ${THEME==='dark'?'':'w'}" onclick="setTheme('dark')">🌙 어두운 테마</button><button class="btn sm ${THEME==='light'?'':'w'}" onclick="setTheme('light')">☀️ 밝은 테마</button></div>`;}
+function themeBtn(){return`<div class="row" style="justify-content:center;margin:8px 0"><button class="btn sm ${PROJ?'':'w'}" onclick="setProj(true)">🌍 실제 넓이 지도</button><button class="btn sm ${PROJ?'w':''}" onclick="setProj(false)">🗺️ 평평한 지도</button></div><div class="row" style="justify-content:center;margin:8px 0"><button class="btn sm ${THEME==='dark'?'':'w'}" onclick="setTheme('dark')">🌙 어두운 테마</button><button class="btn sm ${THEME==='light'?'':'w'}" onclick="setTheme('light')">☀️ 밝은 테마</button></div>`;}
 const W=1200,H=473,CS=0.3,LAT0=84,SEA=255,CPX=3,SC=5,CF=25; // 0.3도 칸 (예전 1.5도 칸의 1/25 넓이)
 const $=s=>document.querySelector(s);
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
@@ -1847,7 +1847,7 @@ function startRoad(N,c,kind){const wall=kind==='wall',WN=wall?'성벽':'도로';
  return`${wall?'🧱':'🛣️'} ${WN} 공사를 시작했어요! (${p.length}구간, 약 ${Math.ceil(p.length/rate)}일 걸려요)`;}
 // 그리기
 function drawRoadsCities(Z){if(!CITIES.length)return;const LT=THEME==='light';
- const sx=c=>screenX((c%W)+.5),sy=c=>V.oy+(((c/W)|0)+.5)*V.z;
+ const sx=c=>screenX((c%W)+.5),sy=c=>V.oy+RY(((c/W)|0)+.5)*V.z;
  for(const lv of[1,2,3]){const w=lv===1?clamp(Z*0.09,0.8,2.4):clamp(Z*0.16,1.4,4.2);
   ctx.lineCap='round';ctx.lineJoin='round';
   for(const pass of[0,1]){ctx.beginPath();for(const R of ROADS){if(R.lv!==lv)continue;if(lv===1&&Z<2.5)continue;let p0=null;for(const c of R.pts){const x=sx(c),y=sy(c);if(p0&&Math.abs(x-p0)<CW*0.5)ctx.lineTo(x,y);else ctx.moveTo(x,y);p0=x;}}
@@ -1873,12 +1873,12 @@ function drawRoadsCities(Z){if(!CITIES.length)return;const LT=THEME==='light';
   if(dm>0.15){ctx.strokeStyle='#ff5a5f';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-r,y-r);ctx.lineTo(x+r,y+r);ctx.moveTo(x+r,y-r);ctx.lineTo(x-r,y+r);ctx.stroke();}
   if(Z>=5||(Z>=3&&lv>=3)){const fs=clamp(Z*0.62+lv,10,16);ctx.font=`700 ${fs}px sans-serif`;const nm=cityName(i);ctx.lineWidth=3;ctx.strokeStyle=LT?'rgba(255,255,255,.92)':'rgba(6,9,16,.85)';ctx.strokeText(nm,x,y+r+fs*0.75);ctx.fillStyle=LT?'#0f172a':'#f1f5f9';ctx.fillText(nm,x,y+r+fs*0.75);}}
 }
-function drawRegions(Z){if(!RBORD||Z<4.5)return;const LT=THEME==='light';const x0=Math.max(0,Math.floor(-V.ox/V.z))-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(0,Math.floor(-V.oy/V.z)),y1=Math.min(H-1,Math.ceil((CH-V.oy)/V.z));
- ctx.beginPath();for(let y=y0;y<=y1;y++)for(let xx=x0;xx<=x1;xx++){const x=((xx%W)+W)%W,i=y*W+x,f=RBORD[i];if(!f)continue;const sx=screenX(x),sy=V.oy+y*V.z;
-  if(f&1){ctx.moveTo(sx+V.z,sy);ctx.lineTo(sx+V.z,sy+V.z);}if(f&2){ctx.moveTo(sx,sy+V.z);ctx.lineTo(sx+V.z,sy+V.z);}}
+function drawRegions(Z){if(!RBORD||Z<4.5)return;const LT=THEME==='light';const x0=Math.max(0,Math.floor(-V.ox/V.z))-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(0,Math.floor(RYinv(-V.oy/V.z))),y1=Math.min(H-1,Math.ceil(RYinv((CH-V.oy)/V.z)));
+ ctx.beginPath();for(let y=y0;y<=y1;y++)for(let xx=x0;xx<=x1;xx++){const x=((xx%W)+W)%W,i=y*W+x,f=RBORD[i];if(!f)continue;const sx=screenX(x),sy=V.oy+RYT[y]*V.z,rh=RSC[y]*V.z;
+  if(f&1){ctx.moveTo(sx+V.z,sy);ctx.lineTo(sx+V.z,sy+rh);}if(f&2){ctx.moveTo(sx,sy+rh);ctx.lineTo(sx+V.z,sy+rh);}}
  ctx.strokeStyle=LT?'rgba(40,40,60,.22)':'rgba(255,255,255,.16)';ctx.lineWidth=1;ctx.setLineDash([2,3]);ctx.stroke();ctx.setLineDash([]);}
 // 국경 전투: 양쪽 병사가 맞붙고, 센 쪽이 밀고 들어가요
-function drawClashes(Z,now){if(Z<2.4||!G.frontSample)return;const sz=clamp(Z*1.05,12,34);const ccx=c=>screenX((c%W)+.5),ccy=c=>V.oy+(((c/W)|0)+.5)*V.z;
+function drawClashes(Z,now){if(Z<2.4||!G.frontSample)return;const sz=clamp(Z*1.05,12,34);const ccx=c=>screenX((c%W)+.5),ccy=c=>V.oy+RY(((c/W)|0)+.5)*V.z;
  for(const c of G.frontSample){const a=G.owner[c];if(!(a>0))continue;let j=-1;for(const n of NB[c]){const b=G.owner[n];if(b>0&&b!==a&&G.war[a]&&G.war[a][b]){j=n;break;}}if(j<0)continue;
   const A=G.nations[a],B=G.nations[G.owner[j]];if(!A||!B)continue;const ax=ccx(c),ay=ccy(c),bx=ccx(j),by=ccy(j);if(ax<-40||ax>CW+40||ay<-40||ay>CH+40)continue;
   let dx=bx-ax,dy=by-ay;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const mx=(ax+bx)/2,my=(ay+by)/2;
@@ -1895,16 +1895,16 @@ function drawClashes(Z,now){if(Z<2.4||!G.frontSample)return;const sz=clamp(Z*1.0
    ctx.fillStyle=W2.color;ctx.beginPath();ctx.moveTo(ex+dx*s*sz*0.35,ey+dy*s*sz*0.35);ctx.lineTo(ex-dy*sz*0.28,ey+dx*sz*0.28);ctx.lineTo(ex+dy*sz*0.28,ey-dx*sz*0.28);ctx.fill();
    if(Z>=5&&Math.abs(push)>0.4){ctx.font=`800 ${clamp(Z*0.6,10,14)}px sans-serif`;ctx.lineWidth=3;ctx.strokeStyle='rgba(6,9,16,.85)';ctx.strokeText('돌파!',ex,ey-sz*0.5);ctx.fillStyle='#ffd36a';ctx.fillText('돌파!',ex,ey-sz*0.5);}}}}
 function drawRad(Z,now){if(!G.rad)return;const ks=Object.keys(G.rad);if(!ks.length)return;const a=0.35+0.15*Math.sin(now/400);
- for(const k of ks){const c=+k;if(G.rad[k]<=G.day)continue;const x=screenX(c%W),y=V.oy+((c/W)|0)*V.z;if(x<-V.z||x>CW||y<-V.z||y>CH)continue;{const cx0=x+V.z/2,cy0=y+V.z/2,rr=Math.max(V.z*1.1,10);const g=ctx.createRadialGradient(cx0,cy0,0,cx0,cy0,rr);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(0.6,`rgba(255,255,255,${a+0.25})`);g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx0,cy0,rr,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(x,y,V.z,V.z);}
+ for(const k of ks){const c=+k;if(G.rad[k]<=G.day)continue;const x=screenX(c%W),y=V.oy+RYT[(c/W)|0]*V.z;if(x<-V.z||x>CW||y<-V.z||y>CH)continue;{const cx0=x+V.z/2,cy0=y+V.z/2,rr=Math.max(V.z*1.1,10);const g=ctx.createRadialGradient(cx0,cy0,0,cx0,cy0,rr);g.addColorStop(0,'rgba(255,255,255,.95)');g.addColorStop(0.6,`rgba(255,255,255,${a+0.25})`);g.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx0,cy0,rr,0,7);ctx.fill();ctx.fillStyle='rgba(255,255,255,.92)';ctx.fillRect(x,y,V.z,V.z);}
   if(V.z>=10){const cx=x+V.z/2,cy=y+V.z/2,r=V.z*0.32;ctx.fillStyle='rgba(20,20,20,.85)';for(let q=0;q<3;q++){const an=-Math.PI/2+q*2*Math.PI/3;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,an-0.5,an+0.5);ctx.fill();}ctx.fillStyle='rgba(200,230,40,1)';ctx.beginPath();ctx.arc(cx,cy,r*0.22,0,7);ctx.fill();ctx.fillStyle='rgba(20,20,20,.85)';ctx.beginPath();ctx.arc(cx,cy,r*0.14,0,7);ctx.fill();}}}
 // 병사 점 전투: 전선마다 색이 다른 점(네모·세모) 병사들이 서로 밀어내요
 let FVIS=[],FVT=0;
-function scanFronts(){FVIS=[];const x0=Math.floor(-V.ox/V.z)-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(1,Math.floor(-V.oy/V.z)),y1=Math.min(H-2,Math.ceil((CH-V.oy)/V.z));
+function scanFronts(){FVIS=[];const x0=Math.floor(-V.ox/V.z)-1,x1=x0+Math.ceil(CW/V.z)+2,y0=Math.max(1,Math.floor(RYinv(-V.oy/V.z))),y1=Math.min(H-2,Math.ceil(RYinv((CH-V.oy)/V.z)));
  const step=Math.max(1,Math.floor(Math.sqrt((x1-x0)*(y1-y0)/60000)));
  for(let y=y0;y<=y1;y+=step)for(let xx=x0;xx<=x1;xx+=step){const x=((xx%W)+W)%W,c=y*W+x,a=G.owner[c];if(!(a>0)||!G.war[a])continue;
   for(const j of NB[c]){const b=G.owner[j];if(b>0&&b!==a&&G.war[a][b]){FVIS.push(c,j);break;}}if(FVIS.length>1000)return;}}
 function drawSwarm(Z,now){if(V.z<2.2){return;}if(now-FVT>700){FVT=now;scanFronts();}if(!FVIS.length)return;
- const z=V.z,ds=clamp(z*0.24,2.4,7),cx=c=>screenX((c%W)+.5),cy=c=>V.oy+(((c/W)|0)+.5)*z;
+ const z=V.z,ds=clamp(z*0.24,2.4,7),cx=c=>screenX((c%W)+.5),cy=c=>V.oy+RY(((c/W)|0)+.5)*z;
  for(let q=0;q<FVIS.length;q+=2){const c=FVIS[q],j=FVIS[q+1],A=G.nations[G.owner[c]],B=G.nations[G.owner[j]];if(!A||!B)continue;
   const ax=cx(c),ay=cy(c),bx=cx(j),by=cy(j);if(ax<-20||ax>CW+20||ay<-20||ay>CH+20)continue;let dx=bx-ax,dy=by-ay;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;const px=-dy,py=dx;
   const pa=(A.landAtk+1)/(B.landDef+1),pb=(B.landAtk+1)/(A.landDef+1),push=clamp((pa-pb)/(pa+pb),-0.7,0.7);
@@ -1917,8 +1917,8 @@ function drawSwarm(Z,now){if(V.z<2.2){return;}if(now-FVT>700){FVT=now;scanFronts
    ctx.fillStyle=B.color;const x2=mx+dx*(depth+w)+px*o,y2=my+dy*(depth+w)+py*o;ctx.beginPath();ctx.moveTo(x2,y2-ds*0.6);ctx.lineTo(x2+ds*0.6,y2+ds*0.45);ctx.lineTo(x2-ds*0.6,y2+ds*0.45);ctx.closePath();ctx.fill();ctx.stroke();}
   if(z>=5&&((now/90+c)%7)<1){ctx.fillStyle='rgba(255,240,170,.95)';ctx.fillRect(mx-1.5,my-1.5,3,3);}}}
 function drawNationFlags(Z,now){if(Z<2.6)return;const fs=clamp(Z*1.0,13,28);
- for(const N of G.nations){if(!N||!N.alive||N.cap<0||(N.filler&&Z<6))continue;const x=screenX((N.cap%W)+.5)+fs*0.55,y=V.oy+(((N.cap/W)|0)+.5)*V.z;if(x<-40||x>CW+40||y<-40||y>CH+40)continue;drawFlagPole(N,x,y,fs,now);
-  for(const c of(N._occF||[])){const cx=screenX((c%W)+.5),cy=V.oy+(((c/W)|0)+.5)*V.z;if(cx<-40||cx>CW+40||cy<-40||cy>CH+40)continue;if(G.owner[c]===N.id)drawFlagPole(N,cx,cy,fs*0.8,now);}}}
+ for(const N of G.nations){if(!N||!N.alive||N.cap<0||(N.filler&&Z<6))continue;const x=screenX((N.cap%W)+.5)+fs*0.55,y=V.oy+RY(((N.cap/W)|0)+.5)*V.z;if(x<-40||x>CW+40||y<-40||y>CH+40)continue;drawFlagPole(N,x,y,fs,now);
+  for(const c of(N._occF||[])){const cx=screenX((c%W)+.5),cy=V.oy+RY(((c/W)|0)+.5)*V.z;if(cx<-40||cx>CW+40||cy<-40||cy>CH+40)continue;if(G.owner[c]===N.id)drawFlagPole(N,cx,cy,fs*0.8,now);}}}
 function cityCard(N,c){ensureCities();const ci=cityOf(c,4);if(ci<0)return'';const C=CITIES[ci],o=G.owner[C.c],lv=G.cityLv[ci],dm=G.cityDmg[ci],mine=o===ME;
  let h=`<div class="card" style="margin-top:8px"><div class="t">🏙️ ${esc(cityName(ci))} <span class="tag">${lv}단계</span>${C.coast?'<span class="tag ally">해안</span>':''}${C.coast&&C.timber?'<span class="tag inf">목재 조선소</span>':''}</div>
  <div class="s">${o>0?esc(G.nations[o].name)+'의 도시':'주인 없는 도시'} · 하루 수입 +${fmt(Math.pow(lv,1.8)*(1-dm)*2.5*eraMul(N))}${dm>0.01?` · <span class="neg">${Math.round(dm*100)}% 부서짐</span>`:''}<br>${C.coast?(C.timber?'산과 숲이 가까워 나무배(갤리선·범선)를 만들 수 있어요':'해안 도시라 배를 만들 수 있어요 (나무배는 숲·산이 가까운 해안 도시가 필요해요)'):'바다와 멀어 배는 못 만들어요'}<br>🗺️ 이 도시의 지역: ${REGCELLS[ci]?REGCELLS[ci].length:0}칸 — 함락시키면 지역 전체를 차지해요<br>🏯 성벽 내구도 <b>${Math.round(G.cityHp?G.cityHp[ci]:0)}/${cityHpMax(ci)}</b> — 적이 둘러싸면 줄어들고, 0이 되면 함락돼요. 도시를 빼앗으면 둘레 땅도 함께 차지해요.</div>`;
@@ -1989,8 +1989,16 @@ const V={z:2,ox:0,oy:0};
 function resize(){DPR=Math.min(2,window.devicePixelRatio||1);CW=innerWidth;CH=innerHeight;cv.width=CW*DPR;cv.height=CH*DPR;clampView();}
 addEventListener('resize',resize);
 function zmin(){return Math.max(CW/W*0.9,0.2);}
-const ZMAX=18;function clampView(){V.z=clamp(V.z,zmin(),ZMAX);const mh=H*V.z;if(mh<CH)V.oy=(CH-mh)/2;else V.oy=clamp(V.oy,CH-mh-70,60);const mw=W*V.z;V.ox=((V.ox%mw)+mw)%mw;if(V.ox>0)V.ox-=mw;}
-function centerOn(cell,z){if(z)V.z=z;const x=cell%W,y=(cell/W)|0;V.ox=CW/2-(x+.5)*V.z;V.oy=CH*0.42-(y+.5)*V.z;clampView();}
+// 실제 넓이 지도: 북쪽·남쪽으로 갈수록 줄의 높이를 cos(위도)만큼 줄여요 (베르만 등적 도법)
+let PROJ=true;try{PROJ=localStorage.getItem('wc_proj')!=='flat';}catch(e){}
+let RYT=new Float64Array(H+1),RSC=new Float64Array(H),HW=H;
+function buildProj(){RYT[0]=0;for(let y=0;y<H;y++){const la=(LAT0-(y+0.5)*CS)*Math.PI/180;RSC[y]=PROJ?Math.max(0.1,1.6*Math.cos(la)):1;RYT[y+1]=RYT[y]+RSC[y];}HW=RYT[H];}
+buildProj();
+function RY(yf){if(yf<=0)return yf*RSC[0];if(yf>=H)return RYT[H]+(yf-H)*RSC[H-1];const i=yf|0;return RYT[i]+(yf-i)*RSC[i];}
+function RYinv(Y){if(Y<=0)return Y/RSC[0];if(Y>=HW)return H+(Y-HW)/RSC[H-1];let lo=0,hi=H;while(hi-lo>1){const m=(lo+hi)>>1;if(RYT[m]<=Y)lo=m;else hi=m;}return lo+(Y-RYT[lo])/RSC[lo];}
+function setProj(on){PROJ=on;try{localStorage.setItem('wc_proj',on?'real':'flat');}catch(e){}const cy=RYinv((CH*0.5-V.oy)/V.z);buildProj();V.oy=CH*0.5-RY(cy)*V.z;clampView();try{renderPanel(true);}catch(e){}try{renderMenu();}catch(e){}}
+const ZMAX=18;function clampView(){V.z=clamp(V.z,zmin(),ZMAX);const mh=HW*V.z;if(mh<CH)V.oy=(CH-mh)/2;else V.oy=clamp(V.oy,CH-mh-70,60);const mw=W*V.z;V.ox=((V.ox%mw)+mw)%mw;if(V.ox>0)V.ox-=mw;}
+function centerOn(cell,z){if(z)V.z=z;const x=cell%W,y=(cell/W)|0;V.ox=CW/2-(x+.5)*V.z;V.oy=CH*0.42-RY(y+.5)*V.z;clampView();}
 // 한 칸 그리기 (색 + 국경선을 칸 안쪽 가장자리에)
 const TPAT=[[1,1,1,1,1,1,1,1,1],[1.16,1.07,0.97,1.05,0.95,0.88,0.96,0.88,0.82],[1.06,0.97,1,0.97,1.06,0.97,1,0.97,1.06]];
 function paintCell(i){
@@ -2033,14 +2041,15 @@ function render(now){
  if(MAPDIRTY&&now-lastCache>250)redrawCache();else if(now-dirtyT>150){dirtyT=now;flushDirty();}
  if(now-labelT>2000){labelT=now;computeLabels();}
  const mw=W*V.z,mh=H*V.z,Z=V.z*SC;ctx.imageSmoothingEnabled=V.z<CPX;
- for(let k=-1;k<=2;k++){const x0=V.ox+k*mw;if(x0>CW||x0+mw<0)continue;ctx.drawImage(cache,x0,V.oy,mw,mh);}
- const ccx=c=>screenX((c%W)+.5),ccy=c=>V.oy+(((c/W)|0)+.5)*V.z;
+ {const BS=PROJ?6:H,cw0=cache.width,ch0=cache.height,py=ch0/H;for(let y0=0;y0<H;y0+=BS){const y1=Math.min(H,y0+BS),sy=V.oy+RYT[y0]*V.z,sh=(RYT[y1]-RYT[y0])*V.z;if(sy>CH||sy+sh<0)continue;
+  for(let k=-1;k<=2;k++){const x0=V.ox+k*mw;if(x0>CW||x0+mw<0)continue;ctx.drawImage(cache,0,y0*py,cw0,(y1-y0)*py,x0,sy,mw,sh+0.6);}}}
+ const ccx=c=>screenX((c%W)+.5),ccy=c=>V.oy+RY(((c/W)|0)+.5)*V.z;
  ctx.textAlign='center';ctx.textBaseline='middle';
  // 자원 아이콘 (아주 크게 확대했을 때, 보이는 칸만)
- if(V.z>=16){ctx.font=`${Math.round(V.z*0.45)}px sans-serif`;const ya=Math.max(0,Math.floor(-V.oy/V.z)),yb=Math.min(H-1,Math.ceil((CH-V.oy)/V.z));const xa=Math.floor(-V.ox/V.z),xb=xa+Math.ceil(CW/V.z)+1;
+ if(V.z>=16){ctx.font=`${Math.round(V.z*0.45)}px sans-serif`;const ya=Math.max(0,Math.floor(RYinv(-V.oy/V.z))),yb=Math.min(H-1,Math.ceil(RYinv((CH-V.oy)/V.z)));const xa=Math.floor(-V.ox/V.z),xb=xa+Math.ceil(CW/V.z)+1;
   for(let y=ya;y<=yb;y++)for(let xx=xa;xx<=xb;xx++){const x=((xx%W)+W)%W,i=y*W+x;if(!LAND[i])continue;const f=RES[i];if(!(f&14))continue;const rs=V.z*0.13,cs=[];if(f&4)cs.push('#1f2937');if(f&2)cs.push('#9aa7b8');if(f&8)cs.push('#f5c84c');cs.forEach((cl,q)=>cRes(ccx(i)+(q-(cs.length-1)/2)*rs*2.4,ccy(i)+V.z*0.28,rs,cl));}}
  // 산맥·사막 그림 (확대했을 때)
- if(V.z>=7){const st=V.z>=14?2:3,ya=Math.max(0,Math.floor(-V.oy/V.z)),yb=Math.min(H-1,Math.ceil((CH-V.oy)/V.z)),xa=Math.floor(-V.ox/V.z),xb=xa+Math.ceil(CW/V.z)+1;const ms=V.z*st*0.55;
+ if(V.z>=7){const st=V.z>=14?2:3,ya=Math.max(0,Math.floor(RYinv(-V.oy/V.z))),yb=Math.min(H-1,Math.ceil(RYinv((CH-V.oy)/V.z))),xa=Math.floor(-V.ox/V.z),xb=xa+Math.ceil(CW/V.z)+1;const ms=V.z*st*0.55;
   for(let y=ya-(ya%st);y<=yb;y+=st)for(let xx=xa-(((xa%st)+st)%st);xx<=xb;xx+=st){const x=((xx%W)+W)%W,i=y*W+x,t=TERR[i];if(!t||!LAND[i])continue;const px=ccx(i)+((y/st)%2?V.z*st*0.5:0),py=ccy(i);
    if(t===1){ctx.beginPath();ctx.moveTo(px-ms*0.6,py+ms*0.35);ctx.lineTo(px,py-ms*0.45);ctx.lineTo(px+ms*0.6,py+ms*0.35);ctx.closePath();ctx.fillStyle='rgba(40,32,26,.38)';ctx.fill();
     ctx.beginPath();ctx.moveTo(px-ms*0.16,py-ms*0.2);ctx.lineTo(px,py-ms*0.45);ctx.lineTo(px+ms*0.16,py-ms*0.2);ctx.closePath();ctx.fillStyle='rgba(255,255,255,.55)';ctx.fill();}
@@ -2068,10 +2077,10 @@ function render(now){
  drawStacks(now,Z);
  // 이름
  for(const N of G.nations){if(!N||!N.alive||N._lx==null)continue;const fs=Math.min(30,Math.sqrt(N.cells)*Z*0.42);if(fs<9&&N.id!==ME)continue;
-  const x=screenX(N._lx),y=V.oy+N._ly*V.z+(Z>=3?Z*1.3:0);ctx.font=`900 ${Math.max(fs,10)}px sans-serif`;ctx.lineWidth=3.5;ctx.strokeStyle=THEME==='light'?'rgba(255,255,255,.92)':'rgba(6,9,16,.85)';
+  const x=screenX(N._lx),y=V.oy+RY(N._ly)*V.z+(Z>=3?Z*1.3:0);ctx.font=`900 ${Math.max(fs,10)}px sans-serif`;ctx.lineWidth=3.5;ctx.strokeStyle=THEME==='light'?'rgba(255,255,255,.92)':'rgba(6,9,16,.85)';
   const nm=(N.human&&N.id!==ME&&G.pl&&G.pl[N.id]?'● ':'')+N.name;ctx.strokeText(nm,x,y);ctx.fillStyle=THEME==='light'?(N.id===ME?'#b45309':'#1e293b'):(N.id===ME?'#ffd36a':'#eef2f8');ctx.fillText(nm,x,y);}
  // 선택
- if(UI.sel!=null){const x=screenX((UI.sel%W)+.5),y=V.oy+(((UI.sel/W)|0)+.5)*V.z,r=Math.max(7,V.z*0.7);ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();}
+ if(UI.sel!=null){const x=screenX((UI.sel%W)+.5),y=V.oy+RY(((UI.sel/W)|0)+.5)*V.z,r=Math.max(7,V.z*0.7);ctx.strokeStyle='#38bdf8';ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();}
  // 효과
  G.fx=G.fx.filter(f=>now-f.t<(f.k==='s'?4200:f.k==='n'?6000:f.dur?f.dur+1200:2600));
  for(const f of G.fx){const age=now-f.t;
@@ -2173,7 +2182,7 @@ function moveStacks(dt){
 function drawStacks(now,Z){
  const split=Z>=18;
  for(const s of STK){let px=s.x,py=s.y;if(s.kind==='A'){const a=now/700+s.ph;px+=Math.cos(a)*4;py+=Math.sin(a)*2.5;}
-  const x=screenX(px),y=V.oy+py*V.z+(s.kind==='L'?Math.sin(now/260+s.x)*1.5:Math.sin(now/500+s.y)*1);
+  const x=screenX(px),y=V.oy+RY(py)*V.z+(s.kind==='L'?Math.sin(now/260+s.x)*1.5:Math.sin(now/500+s.y)*1);
   if(x<-40||x>CW+40||y<-40||y>CH+40)continue;const mine=s.nid===ME;
   const N=G.nations[s.nid],rgb=N?N.rgb:[120,120,120],flip=(s.dir||1)<0;
   const ring=(cx,cy,r)=>{ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(cx,cy+r*0.55,r*0.8,r*0.25,0,0,7);ctx.fill();if(mine){ctx.strokeStyle='#ffcf33';ctx.lineWidth=2.5;ctx.beginPath();ctx.ellipse(cx,cy+r*0.55,r*0.8,r*0.25,0,0,7);ctx.stroke();}};
@@ -2197,7 +2206,7 @@ const endPtr=e=>{const wasTap=drag&&!drag.moved&&PTR.size===1;PTR.delete(e.point
 cv.addEventListener('pointerup',endPtr);cv.addEventListener('pointercancel',e=>{PTR.delete(e.pointerId);drag=null;pinch=null;});
 cv.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.deltaY<0?1.15:1/1.15,e.clientX,e.clientY);},{passive:false});
 function zoomAt(f,cx,cy){const nz=clamp(V.z*f,zmin(),ZMAX);const k=nz/V.z;V.ox=cx-(cx-V.ox)*k;V.oy=cy-(cy-V.oy)*k;V.z=nz;clampView();}
-function cellFromScreen(sx,sy){const y=Math.floor((sy-V.oy)/V.z);if(y<0||y>=H)return -1;let x=Math.floor((sx-V.ox)/V.z);x=((x%W)+W)%W;return y*W+x;}
+function cellFromScreen(sx,sy){const y=Math.floor(RYinv((sy-V.oy)/V.z));if(y<0||y>=H)return -1;let x=Math.floor((sx-V.ox)/V.z);x=((x%W)+W)%W;return y*W+x;}
 
 /* ---------------- 화면 UI ---------------- */
 const UI={tab:null,sel:null,aim:null,lastTouch:0,picking:false,pickId:null,cheatOpen:false};
@@ -2392,7 +2401,7 @@ function tabDiplo(N){
 }
 function tabMenu(N){
  const mp=NET.mode!=='single';
- let h=`<h3>⚙️ 메뉴</h3><div class="card"><div class="t">🎨 화면 테마</div>${themeBtn()}</div>`;
+ let h=`<h3>⚙️ 메뉴</h3><div class="card"><div class="t">🎨 화면 · 지도 모양</div>${themeBtn()}</div>`;
  if(NET.mode!=='client')h+=`<div class="card"><div class="t">⏱️ 게임 속도</div><div class="row" style="margin-top:6px">${['⏸️','×1','×2','×3','×5'].map((s,i)=>`<button class="btn sm ${G.spd===i?'g':'w'}" onclick="G.spd=${i};renderTop();renderPanel(true);${NET.mode==='host'?'sendSummary();':''}">${s}</button>`).join('')}</div><div class="s">하루가 지나는 빠르기예요 (×1 = 1초에 하루, ×5 = 1초에 5일)</div></div>`;
  if(mp)h+=`<div class="card"><div class="t">👫 같이 하기 ${NET.mode==='host'?'(내가 방장)':''}</div><div class="s">방 코드: <b style="font-size:18px">${esc(NET.code)}</b><br>친구가 이 게임을 열고 "방 들어가기"에서 이 코드를 넣으면 돼요.</div>
   <div class="s">${Object.entries(G.pl||{}).map(([id,p])=>`🙂 ${esc(p[1])} — ${esc(G.nations[id]?G.nations[id].name:'')}`).join('<br>')}</div>
